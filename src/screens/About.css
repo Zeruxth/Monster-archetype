@@ -45,6 +45,9 @@
   text-align: right;
   color: var(--color-surface-light);
   word-break: break-word;
+  /* Preserve the blank line between the blurb and the thank-you note while still
+     wrapping normally. */
+  white-space: pre-line;
 }
 
 /* Hidden twin reserves the final box; the typed copy overlays it exactly so the
