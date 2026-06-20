@@ -1,0 +1,86 @@
+/* ---- על הפרוייקט (Figma 382-1635) ----
+   Dark page: the shared Menu pinned top-right, the project blurb pinned to the
+   bottom and right-aligned. The text types itself in (no scale-open). */
+.about {
+  /* LTR layout frame (menu right, blurb bottom); the text run itself is RTL. */
+  direction: ltr;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* menu pinned right */
+  justify-content: space-between; /* menu top, blurb bottom */
+  padding: var(--frame-pad);
+  background: var(--color-bg-dark);
+  color: var(--color-surface-light);
+  overflow: hidden;
+}
+
+/* The shared Menu defaults to a dark square; on this dark page it needs the
+   light treatment, matching the landing / monster page. */
+.about .menu__square {
+  background: var(--color-surface-light);
+}
+.about .menu:hover .menu__square,
+.about .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.about .menu__link {
+  color: var(--color-surface-light);
+}
+
+/* ---- Blurb ---- */
+.about__body {
+  position: relative;
+  width: 100%;
+}
+
+.about__text {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.2;
+  text-align: right;
+  color: var(--color-surface-light);
+  word-break: break-word;
+}
+
+/* Hidden twin reserves the final box; the typed copy overlays it exactly so the
+   paragraph fills top-to-bottom without reflowing. */
+.about__text--ghost {
+  visibility: hidden;
+}
+.about__text--typed {
+  position: absolute;
+  inset: 0;
+}
+
+/* Blinking caret trailing the typed text (a thin light bar). */
+.about__caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.8em;
+  margin-inline-start: 2px;
+  vertical-align: baseline;
+  background: var(--color-surface-light);
+  transform: translateY(0.08em);
+  animation: about-caret-blink 1s steps(1) infinite;
+}
+@keyframes about-caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about__caret {
+    display: none;
+  }
+}

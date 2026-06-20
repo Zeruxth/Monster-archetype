@@ -1,0 +1,145 @@
+/* ---- Shared test shell: dark page + persistent white frame + dots ----
+   Wraps both the Instructions (intro) and Card phases. The frame and dots are
+   the SAME elements across both phases, so the frame never re-animates and the
+   dots can physically move (FLIP) from the centre to the bottom. */
+.test {
+  /* LTR layout frame (matches Figma auto-layout); text runs are RTL. */
+  direction: ltr;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* logo pinned right */
+  gap: 16px;
+  padding: var(--frame-pad);
+  /* Same dark website background as the landing, so the frame persists and only
+     its contents change between phases. */
+  background: var(--color-bg-dark);
+}
+
+/* The shared Menu defaults to a dark square (for light screens); on this dark
+   page it needs the light treatment, matching the landing logo. */
+.test .menu__square {
+  background: var(--color-surface-light);
+}
+.test .menu:hover .menu__square,
+.test .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.test .menu__link {
+  color: var(--color-surface-light);
+}
+
+/* ---- White rounded frame filling the dark page ---- */
+.test__frame {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 48px;
+  border-radius: 24px;
+  background: var(--color-surface-light);
+  color: var(--color-text-primary);
+  /* Scale out from the מבחן nav item (right-centre); plays once when the shell
+     first mounts (entering from the landing) and never again between phases.
+     `backwards` releases the transform once settled so descendants render crisp. */
+  transform-origin: 100% 50%;
+  animation: frame-scale-in 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Instructions phase: intro copy is vertically centred as a group with the dots.
+   Cards phase: the answer row flexes to fill, pushing the dots to the bottom. */
+.test__frame--instructions,
+.test__frame--loading,
+.test__frame--reveal {
+  justify-content: center;
+}
+
+/* Loading: the pill + dots are a centred group with a little breathing room. */
+.test__frame--loading {
+  gap: 24px;
+}
+
+@keyframes frame-scale-in {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Button + dots rise up from below on first reveal (delay set inline for the
+   instructions phase so they land after the text finishes "writing"). */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Pagination dots (4 × 16px across 172px) ---- */
+.test__dots {
+  flex-shrink: 0;
+  display: flex;
+  gap: 36px;
+  animation: rise-in 1040ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  transition: opacity 500ms ease;
+}
+
+/* Reveal: the dots have done their job — fade them out as the emotion lands. */
+.test__dots--out {
+  opacity: 0;
+}
+
+.test__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-primary);
+  /* Smoothly "fills" (and tints) when a card is reached. */
+  transition:
+    background-color 675ms ease,
+    border-color 675ms ease;
+}
+.test__dot--on {
+  background-color: var(--color-text-primary);
+}
+
+/* ---- Loading loop: dots bounce in sequence until the analysis resolves ----
+   Delays start after the dots have eased up under the pill (~700ms FLIP), and
+   the stagger persists across the infinite loop to read as a travelling wave. */
+.test__dots--loading .test__dot {
+  animation: dot-load 1100ms ease-in-out infinite;
+}
+.test__dots--loading .test__dot:nth-child(1) {
+  animation-delay: 700ms;
+}
+.test__dots--loading .test__dot:nth-child(2) {
+  animation-delay: 820ms;
+}
+.test__dots--loading .test__dot:nth-child(3) {
+  animation-delay: 940ms;
+}
+.test__dots--loading .test__dot:nth-child(4) {
+  animation-delay: 1060ms;
+}
+
+@keyframes dot-load {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}

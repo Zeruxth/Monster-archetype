@@ -1,0 +1,277 @@
+/* ---- Monster reveal (Figma 382-717) ----
+   Dark page + a light rounded panel split into a text column and a bordered art
+   column. Mirrors the test shell's dark-page / light-frame treatment so the
+   reveal → result hand-off feels like the same surface. */
+.result {
+  /* LTR layout frame (text column left, art column right), RTL text runs. */
+  direction: ltr;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* menu pinned right */
+  gap: 16px;
+  padding: var(--frame-pad);
+  background: var(--color-bg-dark);
+}
+
+/* The shared Menu defaults to a dark square (for light screens); on this dark
+   page it needs the light treatment, matching the landing / test logo. */
+.result .menu__square {
+  background: var(--color-surface-light);
+}
+.result .menu:hover .menu__square,
+.result .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.result .menu__link {
+  color: var(--color-surface-light);
+}
+
+/* ---- Light rounded panel filling the dark page ---- */
+.result__panel {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 24px;
+  overflow: hidden; /* clips the column borders to the rounded corners */
+  background: var(--color-surface-light);
+  color: var(--color-text-primary);
+}
+
+.result__row {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: stretch; /* art column borders span the full panel height */
+  min-height: 0;
+}
+
+/* ---- Text column (left) ---- */
+.result__text {
+  flex-shrink: 0;
+  width: 650px;
+  max-width: 55%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* RTL: content hugs the right */
+}
+
+.result__title-wrap {
+  width: 100%;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.result__title {
+  margin: 0;
+  width: 100%;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: 48px;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.result__section {
+  position: relative;
+  width: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+.result__why-label {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.result__why {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+/* The "discover more" link sits at the left edge of the column (Figma 359-951),
+   opposite the right-hugging RTL text above it. */
+.result__why .btn--link {
+  align-self: flex-start;
+}
+.result__why-text {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.3;
+  text-align: right;
+  color: var(--color-text-secondary);
+}
+
+/* ---- Art column (right): bordered region centring the monster ---- */
+.result__art {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 34px;
+}
+.result__minotaur {
+  height: 100%;
+  max-height: 600px;
+}
+
+/* ---- Entrance: structural frame lines draw themselves in ----
+   The static column borders are replaced with absolutely-positioned spans so
+   they can be "drawn" (scaleX/scaleY 0→1). The vertical divider goes first
+   (top→bottom), then the art's top/bottom rules and the section divider. */
+.result__rule {
+  position: absolute;
+  background: var(--color-border);
+  animation: 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Vertical divider between the text and art columns — draws top→bottom. */
+.result__rule--v {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  transform-origin: 50% 0;
+  animation-name: rule-draw-y;
+  animation-duration: 600ms;
+}
+
+/* Art box top / bottom rules — draw left→right, out of the divider. */
+.result__rule--t,
+.result__rule--b {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform-origin: 0 50%;
+  animation-name: rule-draw-x;
+  animation-delay: 500ms;
+}
+.result__rule--t {
+  top: 0;
+}
+.result__rule--b {
+  bottom: 0;
+}
+
+/* Title↓section divider in the text column — draws right→left (RTL reading). */
+.result__rule--section {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform-origin: 100% 50%;
+  animation-name: rule-draw-x;
+  animation-delay: 300ms;
+}
+
+@keyframes rule-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes rule-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---- Text reveal: rises in once the frame lines have drawn ---- */
+.result__title,
+.result__why-label,
+.result__why-text,
+.result__why .btn--link {
+  animation: result-text-in 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.result__title {
+  animation-delay: 900ms;
+}
+.result__why-label {
+  animation-delay: 1100ms;
+}
+.result__why-text {
+  animation-delay: 1250ms;
+}
+.result__why .btn--link {
+  animation-delay: 1400ms;
+}
+@keyframes result-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Monster reveal: the silhouette draws itself, floods dark, then the
+   internal contour lines draw on top ----
+   At rest the strokes are light (#e4e4e4) — invisible on the light panel. So the
+   body outline draws DARK (visible), then the body floods dark and its stroke
+   switches to light. The internal contour lines hold off until the body is dark,
+   then draw in their final light colour — so they look identical while drawing
+   and at rest (never a dark→light switch). */
+.result .minotaur__body {
+  fill: transparent;
+  stroke: #1a1a1a;
+  /* Render the stroke at a constant 1 screen-px (independent of the SVG scale),
+     so it matches the 1px structural frame rules. */
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  /* stroke-dasharray / stroke-dashoffset are seeded per-path in JS (Result.tsx)
+     with the real rendered pixel length, since non-scaling-stroke measures the
+     dash in screen px. */
+  animation:
+    monster-draw 3000ms ease-in forwards,
+    monster-body-fill 700ms ease 3000ms forwards;
+}
+.result .minotaur__line {
+  stroke: var(--monster-stroke, #e4e4e4);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  /* butt caps: a round cap renders a visible dot even when the line is fully
+     "hidden" at dashoffset 1, leaving stray marks on the body before it draws. */
+  stroke-linecap: butt;
+  animation: monster-draw 2000ms ease-in 3500ms forwards;
+}
+@keyframes monster-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes monster-body-fill {
+  to {
+    fill: var(--monster-fill, #1a1a1a);
+    stroke: var(--monster-stroke, #e4e4e4);
+  }
+}

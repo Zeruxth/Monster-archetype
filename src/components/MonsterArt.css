@@ -1,0 +1,21 @@
+/* Finished monster line-art. The SVG carries no width/height, so it takes its
+   intrinsic aspect ratio from the viewBox and is scaled by the surrounding
+   context (e.g. the catalogue card constrains its max-height). */
+.monster-art {
+  display: block;
+  height: auto;
+  width: auto;
+  overflow: visible;
+}
+
+/* All strokes share one weight, rendered at a constant 1 screen-px regardless
+   of how large the tile is (non-scaling-stroke), and pick up the context colour
+   so a card hover / reveal can recolour them. A thin, minimal line. */
+.monster-art__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

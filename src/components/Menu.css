@@ -1,0 +1,77 @@
+.menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* Anchor the square; links reveal to its left. */
+  height: 24px;
+}
+
+/* The persistent square: solid by default, outlined on hover. */
+.menu__square {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color var(--t-ui), border-color var(--t-ui);
+}
+
+/* Links sit to the left of the square, hidden until hover. The 15px offset from
+   the square is added as padding (not a position gap) so the hover area is
+   continuous from the square to the links — otherwise the cursor crosses empty
+   space on the way over and the menu closes before anything can be clicked. */
+.menu__links {
+  position: absolute;
+  inset-inline-end: 100%;
+  padding-inline-end: 15px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-ui), transform var(--t-ui);
+}
+
+.menu:hover .menu__square,
+.menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-text-primary);
+}
+
+.menu:hover .menu__links,
+.menu:focus-within .menu__links {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+  pointer-events: auto;
+}
+
+.menu__link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+.menu__link:hover:not(:disabled) {
+  opacity: 0.6;
+}
+.menu__link:disabled {
+  cursor: default;
+}
+
+/* "You are here": the current page's item gets an underline, matching the
+   bottom-border treatment of the link button (.btn--link). */
+.menu__link--active {
+  padding-bottom: 4px;
+  border-bottom: 1px solid currentColor;
+}

@@ -1,0 +1,244 @@
+/* ---- A monster's page (Figma 382-1522) ----
+   Dark page + a light rounded panel that scrolls internally, so its scrollbar
+   stays inside the rounded frame. A text column sits beside the monster art,
+   with a gallery of reference images wrapping below. */
+.monster-page {
+  /* LTR layout frame (text column right, art column left); text runs are RTL. */
+  direction: ltr;
+  /* Lock the screen to the viewport so the panel (not the window) scrolls — the
+     minimal scrollbar then lives inside the rounded frame. Unlike the catalogue,
+     which deliberately scrolls the page, this screen keeps its frame fixed. An
+     explicit height (rather than flex:1, which would grow with the tall content)
+     bounds it; overflow:hidden guards against any sub-pixel spill. */
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* menu pinned right */
+  gap: 24px;
+  padding: var(--frame-pad);
+  background: var(--color-bg-dark);
+}
+
+/* The shared Menu defaults to a dark square; on this dark page it needs the
+   light treatment, matching the landing / result. */
+.monster-page .menu__square {
+  background: var(--color-surface-light);
+}
+.monster-page .menu:hover .menu__square,
+.monster-page .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.monster-page .menu__link {
+  color: var(--color-surface-light);
+}
+
+/* ---- Scrolling light panel ---- */
+.monster-page__panel {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  border-radius: 24px;
+  background: var(--color-surface-light);
+  color: var(--color-text-primary);
+  /* The panel is the scroll container, so the (minimal) scrollbar renders inside
+     the rounded frame rather than on the page. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Firefox: thin bar, dark thumb on a transparent track. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-secondary) transparent;
+}
+/* WebKit: a slim thumb that stays INSIDE the rounded frame. The track is inset
+   top/bottom by the corner radius so the bar never overlaps the rounded corners
+   (where it looked like it was "escaping" the frame), and the thumb carries a
+   transparent border (clipped to its padding box) so it floats a couple of px
+   off the right edge rather than sitting flush against it. */
+.monster-page__panel::-webkit-scrollbar {
+  width: 8px;
+}
+.monster-page__panel::-webkit-scrollbar-track {
+  margin: 24px 0;
+  background: transparent;
+}
+.monster-page__panel::-webkit-scrollbar-thumb {
+  background: var(--color-text-secondary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+/* ---- Top row: info column + art column ---- */
+.monster-page__top {
+  width: 100%;
+  display: flex;
+  align-items: stretch; /* art column borders span the row height */
+}
+
+.monster-page__info {
+  /* The text column takes up the slack on wide screens: the art frame is a fixed
+     size (below), so any extra panel width flows into the text instead. */
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* RTL: content hugs the right */
+}
+
+.monster-page__title {
+  margin: 0;
+  width: 100%;
+  padding: 16px 24px;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: 48px;
+  line-height: 1.1;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.monster-page__sections {
+  width: 100%;
+  border-top: 1px solid var(--color-border);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.monster-page__section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.monster-page__label {
+  margin: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.monster-page__body {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.4;
+  text-align: right;
+  color: var(--color-text-secondary);
+}
+
+/* ---- Further-reading links ---- */
+.monster-page__links {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-end;
+}
+.monster-page__link {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  /* slight hover effect */
+  transition: opacity var(--t-ui);
+}
+.monster-page__link:hover,
+.monster-page__link:focus-visible {
+  opacity: 0.55;
+}
+
+/* ---- Art column (left visually): bordered region centring the monster ---- */
+.monster-page__art {
+  position: relative;
+  /* Fixed-size frame: it never grows with the screen (the text column does that
+     instead), so the monster's bordered box stays the same on larger displays. */
+  flex: 0 0 860px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 34px;
+  /* The finished art is line-work in `currentColor`; on the light panel it must
+     read dark (the outer page sets a light colour for the dark backdrop). */
+  color: var(--color-text-primary);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.monster-page__monster {
+  height: 100%;
+  max-height: 540px;
+}
+/* The line-art SVG sizes to content by default. In the art column, give it a
+   contained box (the SVG's default preserveAspectRatio "meet" fits the drawing
+   inside, preserving aspect ratio) so a WIDE monster (e.g. the Vampire) scales
+   to the column width instead of overflowing past the frame. The box is 88% of
+   the column — enough to keep a wide monster inside the frame while still
+   reading large. */
+.monster-page__monster.monster-art {
+  width: 88%;
+  height: 88%;
+  max-height: 589px; /* scales the monster with the larger 860px frame */
+}
+
+/* Back arrow (top-right of the art column) → catalogue. */
+.monster-page__back {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--t-ui),
+    color var(--t-ui);
+}
+.monster-page__back:hover,
+.monster-page__back:focus-visible {
+  background: var(--color-text-primary);
+  color: var(--color-surface-light);
+}
+
+/* ---- Gallery: equal-width images, wrapping below, scrolling with the panel ---- */
+.monster-page__gallery {
+  width: 100%;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+.monster-page__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}

@@ -1,0 +1,39 @@
+:root {
+  /* Base palette */
+  --color-background: #BABABA;
+  --color-bg-dark: #242424; /* landing / dark surfaces */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #4D4D4D;
+  --color-surface-light: #E4E4E4;
+  --color-surface-dark: #444444;
+  --color-border: #1A1A1A;
+
+  /* Emotion colors */
+  --color-confusion: #FA7443; /* בלבול */
+  --color-suspicion: #583FA7; /* חשד */
+  --color-terror: #F74847;    /* אימה */
+  --color-awe: #3246F9;       /* יראה */
+  --color-longing: #D844FA;   /* כמיהה */
+  --color-smallness: #25A3A5; /* קטנות */
+  --color-security: #26963D;  /* ביטחון */
+
+  /* Radii */
+  --radius-sm: 3px;
+  --radius-md: 8px;
+
+  /* Frame padding (Figma: 48px) */
+  --frame-pad: 48px;
+
+  /* Transitions */
+  --t-screen: 350ms ease-in-out;
+  --t-ui: 300ms ease;
+}
+
+/*
+ * Responsive layout (not scaled): fixed, readable type sizes with flex
+ * auto-layout that reflows. Larger screens get more whitespace, not bigger
+ * everything. Root stays at the browser default 16px.
+ */
+html {
+  font-size: 100%;
+}

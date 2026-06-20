@@ -1,0 +1,63 @@
+/* Catalogue tile (Figma 382-1080). A bordered square holding the monster line-
+   art above its name. */
+.monster-card {
+  /* button reset */
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  /* layout — the tile is a square; the art flexes to fill the space above the
+     name, so the monster scales to fit (and grows with the card on wider
+     screens). */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-surface-light);
+  border-radius: 16px;
+  /* Default state: light monster + dark contour lines on the dark page. */
+  background: transparent;
+  color: var(--color-surface-light);
+  --monster-fill: var(--color-surface-light);
+  --monster-stroke: var(--color-bg-dark);
+  transition:
+    background-color var(--t-ui),
+    color var(--t-ui);
+}
+
+/* Hover: the card fills light and the monster flips to the dark filled body with
+   light contour lines (matching the result screen). */
+.monster-card:hover,
+.monster-card:focus-visible {
+  background: var(--color-surface-light);
+  color: var(--color-text-primary);
+  --monster-fill: var(--color-text-primary);
+  --monster-stroke: var(--color-surface-light);
+}
+
+.monster-card__art {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* The monster sits a touch smaller than the tile (knob: tune this percentage). */
+.monster-card__art .minotaur,
+.monster-card__art .monster-art {
+  max-height: 80%;
+  max-width: 100%;
+}
+
+.monster-card__label {
+  margin: 0;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: inherit;
+}

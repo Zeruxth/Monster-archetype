@@ -1,0 +1,177 @@
+/* Card body (answer card + ink blot). The dark page, white frame and dots live
+   in the shared shell (see Test.css); these are the frame's contents. */
+
+/* Row: answer card (left) + blot stage (right), vertically centred. Flexes to
+   fill the frame so the shell's dots sit at the bottom (Figma 381-274). */
+.card-screen__row {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ---- Left: bordered answer card (Figma 381-246), rises in from below ---- */
+.card-screen__answer {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  /* `backwards` keeps it hidden through the delay, then releases the transform
+     so the 1px border renders crisp (no lingering composited layer). */
+  animation: card-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-screen__answer-inner {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* right (RTL) */
+  gap: 16px;
+}
+
+.card-screen__question {
+  margin: 0;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Grey text field fills the rest of the card (Figma 381-249). */
+.card-screen__field {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border-radius: 16px;
+  background: var(--color-background);
+}
+
+/* The whole grey area is the input. RTL text starts at the top-right, clearing
+   the submit button anchored at the bottom-left. */
+.card-screen__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  background: transparent;
+  resize: none;
+  outline: none;
+  padding: 16px;
+  padding-bottom: 48px; /* keep typed text clear of the submit button */
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  caret-color: var(--color-text-secondary);
+  text-align: right;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+/* ---- Submit button: bordered arrow, bottom-left of the field (Figma 382-347) ---- */
+.card-screen__submit {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5.305px;
+  border: 1px solid var(--color-border);
+  border-radius: 5.305px;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    background var(--t-ui),
+    color var(--t-ui),
+    opacity var(--t-ui),
+    transform 150ms ease;
+}
+.card-screen__submit svg {
+  display: block;
+}
+/* Hover: invert to a filled dark chip with a light arrow. */
+.card-screen__submit:hover:not(:disabled),
+.card-screen__submit:focus-visible:not(:disabled) {
+  background: var(--color-text-primary);
+  color: var(--color-surface-light);
+}
+.card-screen__submit:active:not(:disabled) {
+  transform: scale(0.94);
+}
+/* Disabled until something is typed. */
+.card-screen__submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- Right: ink blot, drag to rotate (Figma 381-273 / 381-261) ---- */
+.card-screen__stage {
+  align-self: stretch;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+/* Single masked element: the blot SVG (set inline per card) is the mask, and an
+   inline gradient fills it (dark at top → emotion tint at the bottom for tinted
+   cards). One mask = one antialiased edge, so the stroke stays clean. */
+.blot {
+  width: 750px;
+  max-width: 52vw;
+  /* Union aspect ratio (750 × 549.832). */
+  aspect-ratio: 750 / 549.832;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  /* Fades in as one unit, tint included. */
+  animation: blot-fade 1050ms ease 180ms backwards;
+}
+
+/* Full-colour blot: the SVG carries its own colours, so it's drawn as a plain
+   background image (no mask). Same box/aspect-ratio as the masked variant. */
+.blot--colored {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+}
+
+@keyframes blot-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

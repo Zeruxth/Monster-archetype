@@ -1,0 +1,32 @@
+/* Loading pill: the answer card collapsed to a small bordered chip, centred in
+   the frame with the looping dots below (see .test__dots--loading in Test.css). */
+.loading__pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* RTL */
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+.loading__text {
+  position: relative;
+  margin: 0;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Reserves the final width; invisible but takes up space. */
+.loading__text-sizer {
+  visibility: hidden;
+}
+
+/* The growing visible text overlays the sizer exactly. */
+.loading__text-typed {
+  position: absolute;
+  inset: 0;
+}

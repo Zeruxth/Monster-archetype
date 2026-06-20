@@ -1,0 +1,79 @@
+/* Emotion reveal card (Figma 382-671). The loading pill has expanded into this
+   bordered card, centred in the persistent white frame. */
+.reveal__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* RTL */
+  gap: 24px;
+  width: 476px;
+  max-width: 100%;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  /* Entrance (pill→card morph, or a rise-in on dev jump) is driven from JS via
+     the Web Animations API — see RevealBody. transform-origin centred so the
+     morph scales about the shared centre of the pill and card. */
+  transform-origin: 50% 50%;
+}
+
+.reveal__text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  width: 100%;
+}
+
+.reveal__title,
+.reveal__body {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.reveal__title {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.reveal__body {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+/* Hidden full text reserves the final wrapped size so the visible, growing text
+   overlays it exactly and nothing reflows as it types. */
+.reveal__sizer {
+  visibility: hidden;
+}
+.reveal__typed {
+  position: absolute;
+  inset: 0;
+}
+
+/* CTA rises in once the text has finished writing (rise-in keyframe: Test.css). */
+.reveal__cta {
+  animation: rise-in 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Reveal → Result: the card fades out over a small downward nudge (ease-out).
+   The white frame stays — it's the same surface the monster panel is drawn onto. */
+.reveal__card--exit {
+  animation: reveal-card-out 450ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes reveal-card-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+}

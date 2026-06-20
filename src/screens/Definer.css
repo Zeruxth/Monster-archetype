@@ -1,0 +1,53 @@
+/* ---- מגדיר מפלצות catalogue (Figma 382-817) ----
+   Dark page, menu pinned top-right, a full-width grid of monster tiles. */
+.definer {
+  /* LTR layout frame (matches Figma auto-layout); text runs are RTL. */
+  direction: ltr;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* menu pinned right */
+  gap: 16px;
+  padding: var(--frame-pad);
+  background: var(--color-bg-dark);
+}
+
+/* The shared Menu defaults to a dark square (for light screens); on this dark
+   page it needs the light treatment, matching the landing / test / result. */
+.definer .menu__square {
+  background: var(--color-surface-light);
+}
+.definer .menu:hover .menu__square,
+.definer .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.definer .menu__link {
+  color: var(--color-surface-light);
+}
+
+/* Tiles tile edge-to-edge (Figma gap 0) and wrap to fill the page width. */
+.definer__grid {
+  width: 100%;
+  display: grid;
+  /* minmax(0,1fr) — not bare 1fr — so tracks can shrink below the cards'
+     min-content (nowrap labels + SVG) instead of blowing the grid past the
+     right padding. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+/* Option C handoff: the monster hovered on the landing flies from its on-screen
+   box into its tile. A fixed overlay (so it isn't clipped by the grid) whose
+   left/top/width/height + colour are driven by WAAPI in Definer.tsx. */
+.definer__fly {
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+  /* colour is animated; this is the resting (post-land) value */
+  color: var(--color-surface-light);
+}
+.definer__fly .monster-art {
+  width: 100%;
+  height: 100%;
+}

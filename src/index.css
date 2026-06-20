@@ -1,0 +1,101 @@
+@import './styles/fonts.css';
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Minimal scrollbar: just a simple grey thumb, no track/gutter behind it. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #9a9a9a transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #9a9a9a;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b5b5b5;
+}
+
+body {
+  margin: 0;
+  direction: rtl;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: 'The Basics', 'Assistant', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+/* ---- Typography scale (rem = fluid) ---- */
+.title {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+}
+.h1 {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 8rem;        /* 128px */
+  line-height: 7.5rem;    /* 120px */
+}
+.h2-bold {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 2.5rem;      /* 40px */
+}
+.h2 {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 3rem;        /* 48px */
+}
+.h3 {
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 2.5rem;      /* 40px */
+}
+.eyebrow {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 1.75rem;     /* 28px */
+}
+.menu {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 1.125rem;    /* 18px */
+}
+.b1-bold {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;      /* 24px */
+}
+.b2 {
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 1.375rem;    /* 22px */
+  line-height: 1.5;
+}

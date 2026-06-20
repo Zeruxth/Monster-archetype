@@ -1,0 +1,27 @@
+/* Filled Minotaur (Figma 382-717). Sizes to its container's height, keeping its
+   natural aspect ratio. Colours are CSS variables so a later reveal animation
+   can drive the fill / strokes. */
+.minotaur {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Solid body, with the contour lines drawn in the light panel colour so they
+   read as segments cut into the silhouette. */
+.minotaur__body {
+  fill: var(--monster-fill, #1a1a1a);
+  stroke: var(--monster-stroke, #e4e4e4);
+  stroke-width: 0.2;
+  stroke-linecap: round;
+}
+
+/* Internal detail lines (face profile, chest, limb divisions). */
+.minotaur__line {
+  fill: none;
+  stroke: var(--monster-stroke, #e4e4e4);
+  stroke-width: 0.2;
+  stroke-linecap: round;
+}

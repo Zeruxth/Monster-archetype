@@ -1,0 +1,256 @@
+.landing {
+  /* LTR layout frame (matches Figma auto-layout); text runs are RTL. */
+  direction: ltr;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* right */
+  justify-content: space-between;
+  padding: var(--frame-pad);
+  background: var(--color-bg-dark);
+  color: var(--color-surface-light);
+  /* The decorative hover blots are oversized and absolutely placed; clip them
+     to the screen so they never push the window into a scroll. */
+  overflow: hidden;
+}
+
+/* Exit: fade the content out (500ms) while the dark .landing background stays,
+   so the next screen's white frame scales in over an unbroken backdrop. The
+   logo is excluded — it persists across screens (accounted for in the design). */
+.landing--exiting > *:not(.landing__logo) {
+  opacity: 0;
+  transition: opacity 500ms ease;
+  pointer-events: none;
+}
+
+/* ---- Logo: light square, top-right ---- */
+.landing__logo {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-light);
+}
+
+/* ---- Hover background graphic (per-hero placement) ---- */
+.landing__bg {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Filled blots fade in on the same 360ms curve as the text (finish together).
+   Line-art graphics instead self-animate via stroke-draw (see HoverGraphic). */
+.landing__bg--fade {
+  animation: text-in 360ms ease-in both;
+}
+
+/* Raster images slide up into place (the centring translate lives in the
+   keyframe so it survives the animation's `both` fill). */
+.landing__bg--slide {
+  /* Pronounced ease-in (easeInCubic) so the rise visibly accelerates. */
+  animation: bg-slide-in 500ms cubic-bezier(0.32, 0, 0.67, 0) both;
+}
+@keyframes bg-slide-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 88px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* מבחן: faint filled blot (#BABABA @ 0.3), screen-centered (Figma 381-53; the
+   84/136 of the reference frame are simply the centred values for 1440×1024, so
+   centre it properly to keep it middled at any resolution). */
+.landing__bg--test {
+  top: 50%;
+  left: 50%;
+  width: 1167px;
+  height: 856px;
+  max-width: calc(100% - 96px);
+  transform: translate(-50%, -50%);
+}
+
+/* מגדיר מפלצות: centered line-art monster (#BABABA strokes, Figma 381-87).
+   Every monster is drawn at the same HEIGHT (so a wide one like the Vampire
+   isn't shrunk to fit a portrait box) — the host sizes to the monster's own
+   width and the translate centres on that. */
+.landing__bg--catalog {
+  top: calc(50% + 7.65px);
+  left: 50%;
+  height: 872px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.landing__bg--catalog svg {
+  height: 100%;
+  width: auto;
+}
+
+/* על הפרוייקט: centered raster image (Longquan dragon dish, Figma 381-128). */
+.landing__bg--about {
+  top: 50%;
+  left: 50%;
+  width: 868.914px;
+  height: 687.961px;
+  max-width: calc(100% - 96px);
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+}
+
+/* ---- Nav ("Frame 37"): pinned to the vertical middle of the screen ---- */
+.landing__nav {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--frame-pad);
+  right: var(--frame-pad);
+  transform: translateY(-50%);
+  height: 32px;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.landing__nav-item {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-surface-light);
+  font: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: font-weight var(--t-ui);
+}
+.landing__nav-item:hover {
+  font-weight: 700;
+}
+
+/* מבחן pinned right, על הפרויקט pinned left, מגדיר מפלצות stays screen-centered. */
+.landing__nav-item--right {
+  right: 0;
+}
+.landing__nav-item--left {
+  left: 0;
+}
+.landing__nav-item--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ---- Bottom row: project credit (left) + title (right) ---- */
+.landing__bottom {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* Each slot stacks the default text and the hover text (one exits, one enters). */
+.landing__slot {
+  position: relative;
+}
+.landing__slot--left {
+  width: 315px;
+  flex-shrink: 0;
+  /* reserve blurb height so the row doesn't jump between states */
+  min-height: calc(22px * 1.2 * 3);
+  display: flex;
+  align-items: flex-end;
+}
+.landing__slot--right {
+  flex: 1 1 0;
+  min-width: 0;
+  /* reserve two lines at 128px so the row height holds across states */
+  min-height: calc(128px * 1.2 * 2);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.landing__credit {
+  margin: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Hover: secondary blurb fills the 315px column (Figma 381-157). */
+.landing__blurb {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 22px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.landing__title {
+  margin: 0;
+  font-family: 'Lilith', 'Frank Ruhl Libre', serif;
+  font-weight: 400;
+  font-size: 128px;
+  line-height: 1.2;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Hover: title becomes the section title and wraps within the slot
+   (Figma 381-158: flex-[1_0_0] min-w-px). */
+.landing__title--hover {
+  width: 100%;
+  white-space: normal;
+}
+
+/* ---- Reveal transition: default fades out, hover slides up into place ---- */
+
+/* Outgoing default text fades on opacity. Lifted out of flow so the incoming
+   text can occupy the slot without a hard cut. */
+.landing__slot > .is-exiting {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  animation: text-out 360ms ease-out both;
+}
+.landing__slot--left > .is-exiting {
+  left: 0;
+  right: auto;
+}
+.landing__slot--right > .is-exiting {
+  right: 0;
+}
+@keyframes text-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Incoming hover text fades in. */
+.landing__slot .is-entering {
+  animation: text-in 360ms ease-in both;
+}
+@keyframes text-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
