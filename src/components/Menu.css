@@ -54,7 +54,11 @@
 .menu__link {
   border: none;
   background: transparent;
-  padding: 0;
+  /* Every item carries the same bottom padding + a transparent underline, so all
+     items share one box height (text on a single line). Only the active item
+     reveals its underline — sitting just below the text line. */
+  padding: 0 0 4px;
+  border-bottom: 1px solid transparent;
   font-family: 'The Basics', 'Assistant', sans-serif;
   font-size: 18px;
   line-height: 1;
@@ -72,6 +76,5 @@
 /* "You are here": the current page's item gets an underline, matching the
    bottom-border treatment of the link button (.btn--link). */
 .menu__link--active {
-  padding-bottom: 4px;
-  border-bottom: 1px solid currentColor;
+  border-bottom-color: currentColor;
 }

@@ -18,20 +18,29 @@
 /* Exit: fade the content out (500ms) while the dark .landing background stays,
    so the next screen's white frame scales in over an unbroken backdrop. The
    logo is excluded — it persists across screens (accounted for in the design). */
-.landing--exiting > *:not(.landing__logo) {
+.landing--exiting > *:not(.menu) {
   opacity: 0;
   transition: opacity 500ms ease;
   pointer-events: none;
 }
 
-/* ---- Logo: light square, top-right ---- */
-.landing__logo {
-  position: relative;
+/* ---- Corner square = shared Menu, top-right ----
+   It persists across screens (the next screen renders its own square in the same
+   spot), so it's excluded from the exit fade above. On this dark page the square
+   gets the light treatment, matching definer / test / result. */
+.landing .menu {
   z-index: 1;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
+}
+.landing .menu__square {
   background: var(--color-surface-light);
+}
+.landing .menu:hover .menu__square,
+.landing .menu:focus-within .menu__square {
+  background: transparent;
+  border-color: var(--color-surface-light);
+}
+.landing .menu__link {
+  color: var(--color-surface-light);
 }
 
 /* ---- Hover background graphic (per-hero placement) ---- */
@@ -121,9 +130,12 @@
 
 .landing__nav-item {
   position: absolute;
-  top: 0;
+  /* 48px padding enlarges the hover/click target. The top + left/right offsets
+     below pull the box back by the same 48px so the visible text stays put —
+     only the hit area grows. */
+  top: -48px;
   margin: 0;
-  padding: 0;
+  padding: 48px;
   border: none;
   background: transparent;
   color: var(--color-surface-light);
@@ -137,12 +149,13 @@
   font-weight: 700;
 }
 
-/* מבחן pinned right, על הפרויקט pinned left, מגדיר מפלצות stays screen-centered. */
+/* מבחן pinned right, על הפרויקט pinned left, מגדיר מפלצות stays screen-centered.
+   The -48px offsets cancel the padding so the text keeps its original edge. */
 .landing__nav-item--right {
-  right: 0;
+  right: -48px;
 }
 .landing__nav-item--left {
-  left: 0;
+  left: -48px;
 }
 .landing__nav-item--center {
   left: 50%;

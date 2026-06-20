@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Menu } from '../components/Menu';
 import { HoverGraphic } from '../components/HoverGraphic';
 import { monsterArtIds, monsterArtSvg } from '../data/monsterArt';
 import './Landing.css';
@@ -116,7 +117,9 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
 
   return (
     <div className={`landing ${active ? 'landing--hover' : ''} ${exiting ? 'landing--exiting' : ''}`}>
-      <div className="landing__logo" aria-hidden="true" />
+      {/* Corner square doubles as the shared Menu so it opens on hover here too,
+          matching every other screen. No item is "active" on the home screen. */}
+      <Menu onTest={onStart} onDefiner={() => onCatalog?.()} onAbout={onAbout} />
 
       {active && hover && graphic && (
         active.reveal === 'draw' ? (
