@@ -92,15 +92,24 @@
 .landing__bg--catalog {
   top: calc(50% + 7.65px);
   left: 50%;
-  height: 872px;
+  /* 10% smaller than the original 872px (some monsters read too large). */
+  height: calc(872px * 0.9);
+  /* Clamp the host to the screen minus the frame padding (48px each side) in
+     both axes, so an extra-wide monster never spills off-screen. */
+  width: calc(100% - 96px);
+  max-height: calc(100% - 96px);
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
 }
+/* Height drives the size (kept uniform across monsters); width is clamped to the
+   host, so a wide monster scales down to fit (preserveAspectRatio) rather than
+   overflowing past the screen edges. */
 .landing__bg--catalog svg {
   height: 100%;
   width: auto;
+  max-width: 100%;
 }
 
 /* על הפרוייקט: centered raster image (Longquan dragon dish, Figma 381-128). */

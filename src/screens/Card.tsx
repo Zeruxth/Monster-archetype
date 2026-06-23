@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CardDef } from '../data/cards';
 import './Card.css';
 
@@ -11,12 +11,45 @@ interface CardBodyProps {
 export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
   const [text, setText] = useState('');
   const shownAt = useRef(performance.now());
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset per-card state when the card changes.
   useEffect(() => {
     setText('');
     shownAt.current = performance.now();
   }, [card.index]);
+
+  // Grow the text field to fit the typed content. The card is centred in the
+  // row, so the growth reads as symmetric — the card expands up AND down from
+  // the middle. The height is capped so the card never grows past the row (i.e.
+  // it stops at the frame's padding); beyond that the textarea scrolls.
+  const autosize = useCallback(() => {
+    const ta = inputRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    let next = ta.scrollHeight;
+    const row = ta.closest('.card-screen__row') as HTMLElement | null;
+    const card = ta.closest('.card-screen__answer') as HTMLElement | null;
+    const field = ta.parentElement as HTMLElement | null;
+    if (row && card && field) {
+      // The card minus the field = its fixed chrome (title + gaps + padding +
+      // border); the field can fill whatever the row has left for it.
+      const chrome = card.offsetHeight - field.offsetHeight;
+      const maxField = row.clientHeight - chrome;
+      if (maxField > 0) next = Math.min(next, maxField);
+    }
+    ta.style.height = `${next}px`;
+  }, []);
+
+  // Re-measure before paint whenever the text changes, and on resize so the cap
+  // tracks the frame's size.
+  useLayoutEffect(() => {
+    autosize();
+  }, [text, autosize]);
+  useEffect(() => {
+    window.addEventListener('resize', autosize);
+    return () => window.removeEventListener('resize', autosize);
+  }, [autosize]);
 
   const handleContinue = () => {
     if (!text.trim()) return;
@@ -33,10 +66,11 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
           </h2>
           <div className="card-screen__field">
             <textarea
+              ref={inputRef}
               className="card-screen__input"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              dir="rtl"
+              rows={1}
               aria-label="מה אתה רואה?"
               autoFocus
             />

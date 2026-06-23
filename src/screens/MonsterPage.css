@@ -171,13 +171,18 @@
 .monster-page__art {
   position: relative;
   /* Fixed-size frame: it never grows with the screen (the text column does that
-     instead), so the monster's bordered box stays the same on larger displays. */
-  flex: 0 0 860px;
+     instead), so the monster's bordered box stays the same on larger displays.
+     Narrower than before so the monster reads smaller and the text column gets
+     more room. */
+  flex: 0 0 680px;
   align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 34px;
+  /* 48px inset: its right side == the text's left inset (info 24 + title 24), so
+     the monster's gap to the panel's right edge mirrors the text's gap on the
+     left. */
+  padding: 48px;
   /* The finished art is line-work in `currentColor`; on the light panel it must
      read dark (the outer page sets a light colour for the dark backdrop). */
   color: var(--color-text-primary);
@@ -189,7 +194,7 @@
 }
 .monster-page__monster {
   height: 100%;
-  max-height: 540px;
+  max-height: 460px;
 }
 /* The line-art SVG sizes to content by default. In the art column, give it a
    contained box (the SVG's default preserveAspectRatio "meet" fits the drawing
@@ -200,7 +205,7 @@
 .monster-page__monster.monster-art {
   width: 88%;
   height: 88%;
-  max-height: 589px; /* scales the monster with the larger 860px frame */
+  max-height: 460px; /* matches the fallback cap so the monster reads smaller in the narrower 680px frame */
 }
 
 /* Back arrow (top-right of the art column) → catalogue. */
