@@ -122,12 +122,14 @@
 
 .landing__nav-item {
   position: absolute;
-  /* 48px padding enlarges the hover/click target. The top + left/right offsets
-     below pull the box back by the same 48px so the visible text stays put —
-     only the hit area grows. */
-  top: -48px;
+  /* Padding enlarges the hover/click target a little; the top + left/right
+     offsets below pull the box back by the same amount so the visible text
+     stays put — only the hit area grows. Kept modest (16px, was 48px): the old
+     48px made the padded dead zone around each label so large that hovering
+     empty space near a button triggered the hover hero text. */
+  top: -16px;
   margin: 0;
-  padding: 48px;
+  padding: 16px;
   border: none;
   background: transparent;
   color: var(--color-surface-light);
@@ -149,12 +151,12 @@
 }
 
 /* מבחן pinned right, על הפרויקט pinned left, מגדיר מפלצות stays screen-centered.
-   The -48px offsets cancel the padding so the text keeps its original edge. */
+   The -16px offsets cancel the padding so the text keeps its original edge. */
 .landing__nav-item--right {
-  right: -48px;
+  right: -16px;
 }
 .landing__nav-item--left {
-  left: -48px;
+  left: -16px;
 }
 .landing__nav-item--center {
   left: 50%;
@@ -261,5 +263,97 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+/* ---- First-entrance intro (plays once per page load; gated in Landing.tsx) ----
+   The background monster draw-loop plays alone for ~1s, then the nav buttons
+   slide in from their respective edges — right from the right, centre down from
+   the top, left from the left — and the bottom title rises up into place. The 1s
+   `animation-delay` is the lone-background beat; `backwards` fill holds each
+   element in its hidden FROM state through that delay, and after the run reverts
+   to normal styling (the .landing--intro class is dropped in JS once finished),
+   so hover behaviour resumes with no specificity tug-of-war. The nav labels are
+   NOT typed in — SwapText shows the resting word outright; only these transforms
+   move. Skipped on back-to-menu (flag) and under reduced-motion (below). */
+/* Motion and fade are split into two animations per element so the fade can run
+   a touch slower than the slide — it lingers translucent for a beat after the
+   move settles, a softer entrance. The slides carry transform only; landing-fade
+   carries opacity only, so the two never fight over a shared property. A gentle
+   easeOutCubic decelerates the motion; the opacity uses a plain `ease` so the
+   fade ramps up gradually rather than snapping in. */
+.landing--intro .landing__nav-item--right {
+  animation:
+    landing-slide-right 700ms cubic-bezier(0.33, 1, 0.68, 1) 1000ms backwards,
+    landing-fade 1000ms ease 1000ms backwards;
+}
+.landing--intro .landing__nav-item--center {
+  animation:
+    landing-slide-center 700ms cubic-bezier(0.33, 1, 0.68, 1) 1000ms backwards,
+    landing-fade 1000ms ease 1000ms backwards;
+}
+.landing--intro .landing__nav-item--left {
+  animation:
+    landing-slide-left 700ms cubic-bezier(0.33, 1, 0.68, 1) 1000ms backwards,
+    landing-fade 1000ms ease 1000ms backwards;
+}
+.landing--intro .landing__title {
+  animation:
+    landing-rise 900ms cubic-bezier(0.33, 1, 0.68, 1) 1000ms backwards,
+    landing-fade 1200ms ease 1000ms backwards;
+}
+
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes landing-slide-right {
+  from {
+    transform: translateX(64px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes landing-slide-left {
+  from {
+    transform: translateX(-64px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+/* The centre item keeps its -50% centring offset through the slide-from-top, so
+   it composes translate(-50%, …) instead of a bare translateY (which would drop
+   the horizontal centring). */
+@keyframes landing-slide-center {
+  from {
+    transform: translate(-50%, -56px);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes landing-rise {
+  from {
+    transform: translateY(48px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion: skip the slide/rise entirely — everything is shown at rest
+   from the first frame (no delay, no transform). */
+@media (prefers-reduced-motion: reduce) {
+  .landing--intro .landing__nav-item--right,
+  .landing--intro .landing__nav-item--center,
+  .landing--intro .landing__nav-item--left,
+  .landing--intro .landing__title {
+    animation: none;
   }
 }

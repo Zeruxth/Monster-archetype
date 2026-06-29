@@ -70,9 +70,32 @@ const HERO: Record<HeroKey, Hero> = {
   },
 };
 
+// The first-entrance intro (nav buttons slide in, title rises) plays only once
+// per page load. A module-level flag — not React state — survives the Landing
+// unmount/remount that "back to menu" (goHome in App.tsx) triggers, so returning
+// to the landing shows everything already at rest instead of replaying the intro.
+// A full page reload resets it, which is correct: a reload IS a fresh entrance.
+let hasPlayedIntro = false;
+
 export function Landing({ onStart, onCatalog, onAbout, exiting = false }: LandingProps) {
   const [hover, setHover] = useState<HeroKey | null>(null);
   const active = hover ? HERO[hover] : null;
+
+  // First-entrance intro: on the very first landing mount of this page load,
+  // hold the nav buttons + title hidden for ~1s (the background monster draws
+  // alone), then slide/rise them in (see .landing--intro in Landing.css). `intro`
+  // gates the CSS; it's captured once from the module flag so it's true only on
+  // that first mount and false when returning via "back to menu".
+  const [intro, setIntro] = useState(() => !hasPlayedIntro);
+  useEffect(() => {
+    if (!intro) return;
+    hasPlayedIntro = true;
+    // Drop the class once the delayed entrance has finished, so the completed
+    // animations stop applying and normal hover styling takes back over. Covers
+    // the slowest leg: the title's fade (1000ms delay + 1200ms) plus a buffer.
+    const id = window.setTimeout(() => setIntro(false), 2400);
+    return () => window.clearTimeout(id);
+  }, [intro]);
 
   // The background monster currently drawing. It starts on mount and, each time a
   // draw completes (HoverGraphic's onDone), advances to a different creature — a
@@ -106,7 +129,11 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
   }, [active]);
 
   return (
-    <div className={`landing ${active ? 'landing--hover' : ''} ${exiting ? 'landing--exiting' : ''}`}>
+    <div
+      className={`landing ${active ? 'landing--hover' : ''} ${exiting ? 'landing--exiting' : ''} ${
+        intro ? 'landing--intro' : ''
+      }`}
+    >
       {/* Constant background: a monster draws in, holds, withdraws (un-draws),
           then — after a short gap — the next creature draws in its place, looping
           for as long as the landing is shown. The `key` forces a fresh mount per
