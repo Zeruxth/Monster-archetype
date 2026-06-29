@@ -15,7 +15,12 @@
   gap: 8px;
   padding: 24px;
   aspect-ratio: 1;
-  border: 1px solid var(--color-surface-light);
+  /* Frame: a 1px line at half opacity — it reads as a finer, lighter hairline
+     than the solid 1px monster line-art it holds, giving the "half-weight" frame
+     via lightness instead of width. (A true sub-pixel 0.5px border can't render
+     below 1px at dpr=1, so it would match the stroke there; fading a full pixel
+     keeps the frame visibly lighter at every dpr.) */
+  border: 1px solid color-mix(in srgb, var(--color-surface-light) 50%, transparent);
   border-radius: 16px;
   /* Default state: light monster + dark contour lines on the dark page. */
   background: transparent;
@@ -55,7 +60,8 @@
 .monster-card__label {
   margin: 0;
   font-family: 'Lilith', 'Frank Ruhl Libre', serif;
-  font-weight: 400;
+  /* Medium weight (Lilith-Medium, see styles/fonts.css) for the tile title. */
+  font-weight: 500;
   font-size: 24px;
   line-height: 1.1;
   white-space: nowrap;

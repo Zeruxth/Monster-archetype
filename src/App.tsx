@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Landing } from './screens/Landing';
 import type { CatalogOrigin } from './screens/Landing';
 import { TestShell } from './screens/Test';
@@ -123,6 +124,35 @@ export default function App() {
     setMonsterOrigin(rect ?? null);
     setStep('monster');
   };
+  // Result → MonsterPage "discover more": a shared-element hero morph. The
+  // result's filled monster silhouette and the page's line-art share one
+  // `view-transition-name`, so the browser morphs (cross-fade + reposition/
+  // resize) the silhouette into the line drawing while the surrounding text
+  // cross-fades and reorganizes around it. Where the View Transitions API is
+  // unavailable (or motion is reduced) it falls back to the catalogue-style
+  // scale-open from the monster's box (rect).
+  const discoverMonster = (m: Monster, rect?: DOMRect) => {
+    const doc = document as Document & {
+      startViewTransition?: (cb: () => void) => unknown;
+    };
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (doc.startViewTransition && !reduce) {
+      doc.startViewTransition(() =>
+        // flushSync commits the result→page DOM swap synchronously inside the
+        // transition, so the browser captures the before/after for the morph.
+        flushSync(() => {
+          setExiting(false);
+          setRevealExiting(false);
+          setMorphFrom(null);
+          setPageMonster(m);
+          setMonsterOrigin(null); // no scale-open; the morph carries the motion
+          setStep('monster');
+        }),
+      );
+    } else {
+      openMonster(m, rect);
+    }
+  };
   // "על הפרוייקט" — the about screen (available from the landing nav + every
   // page's Menu). No scale-open: the about text simply types itself in.
   const goAbout = () => {
@@ -167,11 +197,11 @@ export default function App() {
   // The catalogue entered via a landing hover runs its own fly-in handoff, so it
   // opts out of the shared fade-in (which would cross-fade the whole dark page).
   const definerFlyIn = step === 'definer' && definerOrigin !== null;
-  // The monster page, when opened from a tile, scales open itself — opt out of
-  // the page-wide fade so the two don't fight.
-  const monsterScaleOpen = step === 'monster' && monsterOrigin !== null;
+  // The monster page runs its own entrance — the catalogue scale-open (origin
+  // set) or the Result→page hero morph (a view transition) — so it always opts
+  // out of the shared screen fade-in, which would otherwise fight them.
   const screenClass =
-    inTest || step === 'result' || definerFlyIn || monsterScaleOpen
+    inTest || step === 'result' || definerFlyIn || step === 'monster'
       ? 'app__screen'
       : 'app__screen fade-in';
 
@@ -242,6 +272,7 @@ export default function App() {
           <Result
             monster={monster}
             onAllMonsters={goDefiner}
+            onDiscover={(rect) => discoverMonster(monster, rect)}
             onTest={goTest}
             onDefiner={goDefiner}
             onAbout={goAbout}

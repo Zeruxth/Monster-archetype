@@ -9,6 +9,11 @@ export interface MonsterLink {
 export interface Monster {
   id: string;
   he: string;
+  /** The exact definite form to follow a preposition like "על" in prose (e.g. the
+   *  Result button's "…וגלה עוד על {heDefinite}"). Defaults to `ה${he}`; set it
+   *  only for the exceptions — proper names that take NO article ("על תיאמת"), or
+   *  compounds where the article sits on a later word ("איש הזאב"). */
+  heDefinite?: string;
   en: string;
   emotion: EmotionId;
   /** Personalized "why this monster" — generated via API later. Minotaur only for now. */
@@ -36,6 +41,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "werewolf",
     he: "איש זאב",
+    heDefinite: "איש הזאב",
     en: "Werewolf",
     emotion: 'confusion',
     culture: "יוון העתיקה (מיתוס ליקאון); אירופה, המאות ה-16–17 (משפטי אדם זאב).",
@@ -52,6 +58,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "enkidu",
     he: "אנקידו",
+    heDefinite: "אנקידו",
     en: "Enkidu",
     emotion: 'confusion',
     culture: "מסופוטמיה (שומר), כ-2100 לפנה\"ס.",
@@ -194,6 +201,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "tiamat",
     he: "תיאמת",
+    heDefinite: "תיאמת",
     en: "Tiamat",
     emotion: 'terror',
     culture: "מסופוטמיה (בבל), כ-1100 לפנה\"ס (אנומה אליש).",
@@ -209,6 +217,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "vritra",
     he: "ורטרה",
+    heDefinite: "ורטרה",
     en: "Vritra",
     emotion: 'terror',
     culture: "הודו, כ-1500–1200 לפנה\"ס (ריג ודה).",
@@ -224,6 +233,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "jormungandr",
     he: "יורמונגנד",
+    heDefinite: "יורמונגנד",
     en: "Jörmungandr",
     emotion: 'terror',
     culture: "סקנדינביה, המאות ה-9–13 (אדות פרוזה, וולוספה).",
@@ -254,6 +264,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "python",
     he: "פיתון",
+    heDefinite: "פיתון",
     en: "Python",
     emotion: 'terror',
     culture: "יוון העתיקה, מהמאה ה-8 לפנה\"ס.",
@@ -269,6 +280,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "yamata-no-orochi",
     he: "ימאטה-נו-אורוצ'י",
+    heDefinite: "ימאטה-נו-אורוצ'י",
     en: "Yamata no Orochi",
     emotion: 'terror',
     culture: "יפן, המאה ה-8 (קוג'יקי, ניהון שוקי).",
@@ -286,6 +298,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "quetzalcoatl",
     he: "קצלקואטל",
+    heDefinite: "קצלקואטל",
     en: "Quetzalcoatl",
     emotion: 'awe',
     culture: "מזואמריקה (אצטקים, מאיה, טולטקים), מהמאה ה-1.",
@@ -346,6 +359,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "garuda",
     he: "גארודה",
+    heDefinite: "גארודה",
     en: "Garuda",
     emotion: 'awe',
     culture: "הודו ודרום-מזרח אסיה, מהמאה ה-5 לפנה\"ס (מהאבהארטה).",
@@ -393,6 +407,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "lilith",
     he: "לילית",
+    heDefinite: "לילית",
     en: "Lilith",
     emotion: 'longing',
     culture: "מסופוטמיה ומסורת יהודית, מהאלף ה-3 לפנה\"ס.",
@@ -455,6 +470,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "polyphemus",
     he: "פוליפמוס",
+    heDefinite: "פוליפמוס",
     en: "Polyphemus",
     emotion: 'smallness',
     culture: "יוון העתיקה, המאה ה-8 לפנה\"ס (אודיסאה).",
@@ -515,6 +531,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "ravana",
     he: "ראוואנה",
+    heDefinite: "ראוואנה",
     en: "Ravana",
     emotion: 'smallness',
     culture: "הודו, מהמאה ה-5 לפנה\"ס (רמאיאנה).",
@@ -547,6 +564,7 @@ export const MONSTERS: Monster[] = [
   {
     id: "bes",
     he: "בס",
+    heDefinite: "בס",
     en: "Bes",
     emotion: 'security',
     culture: "מצרים העתיקה, מהאלף ה-2 לפנה\"ס.",

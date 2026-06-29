@@ -22,3 +22,83 @@
     opacity: 1;
   }
 }
+
+/* ---- Result → MonsterPage hero morph (View Transitions API) ----
+   Driven by App.discoverMonster. The monster carries the same
+   `view-transition-name: monster-hero` on both screens, so the browser morphs
+   the result's filled silhouette into the page's line-art (cross-fade while it
+   repositions/resizes). The monster leads — it runs a touch longer than the
+   surrounding page cross-fade so it's the last thing to settle. Tuned to the
+   project's standard ease (matching the frame-open / scale-open elsewhere). */
+::view-transition-group(monster-hero) {
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* The OLD snapshot is the result's filled silhouette; fading it out IS the fill
+   "draining away" to reveal the light panel beneath — the one meaningful change. */
+::view-transition-old(monster-hero) {
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* The NEW snapshot is the page's line-art — the SAME shape as the silhouette, so
+   cross-fading it through transparency just reads as a pointless flicker. Hold it
+   fully opaque the whole way; the group still repositions/resizes it, and the old
+   silhouette's fill drains out beneath the solid line-work. */
+::view-transition-new(monster-hero) {
+  animation: none;
+}
+/* The rest of the page (text columns, gallery) cross-fades a little quicker so
+   the layout has settled by the time the monster lands. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 440ms;
+  animation-timing-function: ease;
+}
+
+/* ---- Shared monster "hero" box (Result silhouette ⇄ MonsterPage line-art) ----
+   Both screens render the monster inside a FIXED, identical box, so the
+   `view-transition-name: monster-hero` morph carries ZERO scale and ZERO move —
+   only the fill drains and the surrounding text/columns change underneath it.
+   The box is a constant size no matter which monster's art sits inside: each
+   drawing is fitted (SVG preserveAspectRatio "meet") and centred, so a narrow
+   monster gets a little side whitespace and a wide one scales down to fit — the
+   ELEMENT box stays 439×520 on every screen and for every future monster. (439 ≈
+   520 × the silhouette's 46.7648/55.4089 aspect, i.e. the current Result size, so
+   nothing visibly resizes.) Applied as a class at the Result + MonsterPage call
+   sites; future monster screens just add `monster-hero` to inherit the pin. */
+.monster-hero {
+  width: 439px;
+  height: 520px;
+  max-width: none;
+  max-height: none;
+  view-transition-name: monster-hero;
+}
+
+/* ---- Shared scrolling-panel treatment (Result + MonsterPage) ----
+   Both light panels reserve a stable scrollbar gutter so their right-flush art
+   columns sit at the SAME x whether or not the panel actually scrolls — the
+   MonsterPage scrolls its tall content, the Result doesn't, and without a matching
+   gutter the MonsterPage's scrollbar would shove its monster a few px left of the
+   Result's. Each panel keeps its own `overflow` (Result: hidden, so no scrollbar
+   flashes during its reveal; MonsterPage: auto); sharing the gutter + identical
+   scrollbar metrics here is what guarantees the columns line up. The slim thumb
+   stays inside the rounded frame (track inset top/bottom by the corner radius). */
+.panel-scroll {
+  scrollbar-gutter: stable;
+  /* Firefox: thin bar, dark thumb on a transparent track. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-secondary) transparent;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.panel-scroll::-webkit-scrollbar-track {
+  margin: 24px 0;
+  background: transparent;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-text-secondary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}

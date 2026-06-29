@@ -6,13 +6,16 @@ interface InstructionsBodyProps {
   onStart: () => void;
 }
 
+// Two sentences with a hard break before the last one (matches Figma 487-384);
+// `\n` + white-space: pre-line in the CSS forces that break while the first
+// sentence still wraps naturally within the text box.
 const INTRO =
-  'יופיעו לכם ארבעה דימויים מופשטים, לאחר כל דימוי כתבו תגובה חופשית למה שראיתם בדימוי. אין תשובה נכונה ואין הגבלת זמן.';
+  'במבחן יוצגו ארבעה דימויים מופשטים. אחרי כל דימוי כתבו מה הוא יכול להיות בעיניכם.\nאין תשובה נכונה ואין הגבלת זמן.';
 
 // Reveal timeline (ms), relative to the shell mounting:
 //  0–800   white frame scales in (CSS, see .test__frame)
 //  800…    text "types" one character at a time (no fade — chars just appear)
-//  after   button + dots rise up from below
+//  after   the button rises up from below (the dots live on the next screen)
 const TEXT_START = 800;
 const CHAR_STEP = 50; // delay between characters
 const RISE_GAP = 100; // pause after the text finishes before the rise
@@ -62,7 +65,7 @@ export function InstructionsBody({ onStart }: InstructionsBodyProps) {
         style={{ animationDelay: `${INSTRUCTIONS_RISE_DELAY}ms` }}
       >
         <Button arrow onClick={onStart}>
-          התחילו
+          התחלה
         </Button>
       </div>
     </div>

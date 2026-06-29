@@ -1,0 +1,58 @@
+/* ---- TypeText: multi-line typewriter reveal ----
+   Types a text in character by character. An invisible sizer holds the full
+   text's wrapped box so the box never reflows while the visible overlay fills
+   in; dir="rtl" + the inherited right-alignment type each line in from its
+   right (start) edge. Used for the landing's bigger texts (hover title + blurb). */
+.type {
+  position: relative;
+}
+
+/* Reserves the wrapped box (the full text), but is never shown. */
+.type__sizer {
+  visibility: hidden;
+}
+
+/* The visible typed-so-far text, overlaid on the sizer at the same width so it
+   wraps identically (a prefix breaks lines exactly like the full text). */
+.type__typed {
+  position: absolute;
+  inset: 0;
+}
+
+/* Caret: a thin bar at the typing edge; blinks only while typing, then hides. */
+.type__caret {
+  display: inline-block;
+  width: 0.06em;
+  height: 1.05em;
+  margin-inline-start: 0.05em;
+  vertical-align: -0.14em;
+  background: currentColor;
+  opacity: 0;
+}
+.type.is-typing .type__caret {
+  animation: type-caret 0.6s infinite;
+}
+@keyframes type-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Screen-reader-only stable full text (the visible spans are aria-hidden). */
+.type__a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

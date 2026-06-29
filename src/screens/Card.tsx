@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Arrow } from '../components/Arrow';
 import type { CardDef } from '../data/cards';
 import './Card.css';
 
@@ -76,26 +77,12 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
             />
             <button
               type="button"
-              className="card-screen__submit"
+              className="card-screen__submit arrow-host"
               onClick={handleContinue}
               disabled={!text.trim()}
               aria-label={isLast ? 'סיום' : 'המשך'}
             >
-              <svg
-                width="16"
-                height="15"
-                viewBox="0 0 16 15"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M15 7.5H1M6.6 1.2 1 7.5l5.6 6.3"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Arrow />
             </button>
           </div>
         </div>

@@ -19,6 +19,10 @@
   font-size: 40px;
   line-height: 1.2;
   text-align: right;
+  /* Honour the hard break (\n) in INTRO while still wrapping the long first
+     sentence; inherits to both the sizer and the typed overlay so they break
+     identically and nothing reflows. */
+  white-space: pre-line;
 }
 
 /* Hidden full text holds the box at its final size; visible typed text overlays

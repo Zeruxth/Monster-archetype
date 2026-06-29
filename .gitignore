@@ -15,6 +15,10 @@ dist-ssr
 # Local project backups (zips/snapshots) — not part of the site
 backups
 
+# Source reference images (high-res originals). The app only ships the resized
+# copies in src/monster-images/, so this large originals folder stays local.
+/Monster Art/
+
 # Local Claude Code settings
 .claude
 

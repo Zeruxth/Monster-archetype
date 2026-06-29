@@ -1,0 +1,46 @@
+/* The system arrow (Figma 489-1373): a solid filled arrow that takes the current
+   colour (so a hovering control can recolour it). Sized a touch larger than the
+   old 16px glyph; call sites may override `width`. */
+.arrow {
+  display: block;
+  width: 19px;
+  height: auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* RTL "back" arrows point right — mirror the left-pointing artwork. The corner
+   morph below lives on the inner shape, so it composes with this mirror. */
+.arrow--right {
+  transform: scaleX(-1);
+}
+
+/* Rest → hover is a CORNER-RADIUS change, the Figma component's only difference
+   between its Default (489-1372) and Hover (489-1374) states: the corners go from
+   a small radius to fully rounded (the tail/tip caps become semicircles).
+
+   Both `d` values are the exact Figma outlines. The hover one carries four
+   extra ZERO-LENGTH segments (one per cap/barb) so it shares the rest path's
+   command sequence — `transition: d` only tweens between paths whose command
+   lists match, and with matched commands those flats simply shrink to nothing as
+   the radius opens up. No fade, no nudge. Driven by the hosting control
+   (`.arrow-host:hover`) so it fires with the whole control, not just the glyph.
+
+   CSS `d` is Chromium/WebKit only; elsewhere it's ignored and the path's `d`
+   ATTRIBUTE (the rest shape) stands in, static — a clean, fade-free fallback. */
+.arrow__shape {
+  fill: currentColor;
+  d: path('M13.9841 0.168544C14.305 -0.0928264 14.7769 -0.0449293 15.0387 0.275575L15.5139 0.857346C15.776 1.17831 15.7282 1.65107 15.407 1.913L8.87669 7.23895C7.23669 8.57648 8.18247 11.2326 10.2987 11.2326H26.3069C26.7212 11.2326 27.0569 11.5684 27.0569 11.9826V12.7326C27.0569 13.1468 26.7212 13.4826 26.3069 13.4826H10.2987C8.18247 13.4826 7.23668 16.1387 8.87668 17.4762L15.407 22.8022C15.7282 23.0641 15.776 23.5368 15.5139 23.8578L15.0389 24.4393C14.777 24.7599 14.3049 24.8077 13.9841 24.5461L0.276921 13.3683C0.10247 13.226 0.00114102 13.0129 0.000906614 12.7878L0 11.9176C-0.000234713 11.6918 0.101259 11.4779 0.27631 11.3353L13.9841 0.168544Z');
+  transition: d var(--t-ui);
+}
+
+.arrow-host:hover:not(:disabled) .arrow__shape,
+.arrow-host:focus-visible:not(:disabled) .arrow__shape {
+  d: path('M13.6928 0.252972C14.1743 -0.139325 14.8826 -0.0674359 15.2756 0.413617L15.2756 0.413617C15.6691 0.895366 15.5972 1.60494 15.1152 1.99808L12.6848 3.98024C9.76925 6.35809 11.4506 11.08 15.2129 11.08H25.9315C26.5528 11.08 27.0565 11.5837 27.0565 12.205V12.205C27.0565 12.8264 26.5528 13.33 25.9315 13.33H15.2129C11.4506 13.33 9.76924 18.052 12.6848 20.4298L15.1154 22.4122C15.5973 22.8052 15.6691 23.5146 15.2757 23.9962L15.2757 23.9962C14.8828 24.4773 14.1743 24.5491 13.6929 24.1565L0.613108 13.4902C0.225603 13.1742 0.0005216 12.7009 0 12.2009L0 12.2009C-0.000521364 11.6993 0.224925 11.2243 0.613764 10.9075L13.6928 0.252972Z');
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow__shape {
+    transition: none;
+  }
+}

@@ -8,20 +8,21 @@ interface AboutProps {
   onHome?: () => void;
 }
 
-// The project blurb (Figma 382-1635, node 382:1640). Two paragraphs, RTL — the
-// project description, then a personal thank-you note (separated by a blank line,
-// rendered via `white-space: pre-line` on .about__text).
+// The project blurb (Figma 486-299). Three paragraphs, RTL — the project's
+// emotional reading of monsters, the sources it leans on, and the role of AI
+// tools — each on its own line (single \n breaks, rendered via
+// `white-space: pre-line` on .about__text). The third paragraph closes with a
+// personal thank-you note.
 const ABOUT_TEXT =
-  'הארכיטיפ של המפלצת הוא פרויקט גמר ב־B.Des תקשורת חזותית, אוניברסיטת חיפה, 2026. הפרויקט בוחן מפלצות כתגובות רגשיות: 39 מפלצות ממסורות שונות, מחולקות לשבעה פרקים לפי הרגש שהן מגלמות. האתר הוא תרגום דיגיטלי של המחקר, מבחן דימויים קצר, מאגר מפלצות ועמודי מידע. הוא אינו מחליף את הספר, אלא מציע דרך נוספת לפגוש את מערכת הסיווג שנבנתה בו. המחקר מבוסס על מקורות אקדמיים ומיתולוגיים המפורטים בספר. כלי AI שימשו בתהליך העבודה ככלי עזר למחקר, ארגון, ניסוח ופיתוח חזותי.\n\nתודה רבה לכל מי שתמך והקשיב לחפירות שלי על הפרוייקט, לאשתי היקרה, לחברי לשולחן הלימודים ולכם שצפיתם בפרוייקט ואני מקווה שהוא עניין אתכם כמו שהוא עניין אותי.';
+  'הפרויקט בוחן מפלצות כצורות חזותיות של רגשות. במקום לסדר אותן לפי תרבות, תקופה או מבנה גוף, הוא מציע לקרוא אותן דרך הפעולה הרגשית שלהן: מה הן מעוררות, מה הן מסמנות, ואיזה גבול הן מערערות.\nהספר והאתר נשענים על מקורות מיתולוגיים, טקסטים עתיקים, מאמרים וספרי מחקר. החיבור בין המפלצות לרגשות הוא הפרשנות שמציע הפרויקט, ולכן המקורות משמשים בסיס לקריאה, לא תחליף לה.\nכלי בינה מלאכותית שימשו בתהליך העבודה לארגון מידע, ניסוח, עריכה וניתוח תגובות באתר. הם אינם משמשים כאבחון או כמקור סמכות עצמאי, אלא ככלי עזר בתוך מהלך פרשני.  תודה רבה לכל מי שתמך והקשיב לחפירות שלי על הפרוייקט, לאשתי היקרה, לחברי לשולחן הלימודים ולכם שצפיתם בפרוייקט ואני מקווה שהוא עניין אתכם כמו שהוא עניין אותי.';
 
-// Typewriter cadence: one character every ~35ms so the whole paragraph (~574
-// chars) lands in ~20s — slow and deliberate. Click or any key skips to the
-// full text.
+// Typewriter cadence: one character every ~35ms — a slow, deliberate crawl
+// (~24s for the full blurb). Click or any key skips to the full text.
 const CHARS_PER_TICK = 1;
 const TICK_MS = 35;
 
 /**
- * על הפרוייקט (Figma 382-1635). A dark page with the project blurb pinned to
+ * על הפרוייקט (Figma 486-299). A dark page with the project blurb pinned to
  * the bottom, right-aligned. No big scale-open animation — the text simply
  * types itself in. A hidden full-text twin reserves the final box so the
  * paragraph never reflows as it fills.

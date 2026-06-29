@@ -47,11 +47,3 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
-
-.btn__arrow {
-  flex-shrink: 0;
-  transition: transform 200ms ease;
-}
-.btn--cta:hover:not(:disabled) .btn__arrow {
-  transform: translateX(-4px);
-}

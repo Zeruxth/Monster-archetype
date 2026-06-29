@@ -1,17 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
-import { Menu } from '../components/Menu';
-import { HoverGraphic } from '../components/HoverGraphic';
+import { useEffect, useState } from 'react';
+import { HoverGraphic, preloadGraphics } from '../components/HoverGraphic';
+import { SwapText } from '../components/SwapText';
+import { TypeText } from '../components/TypeText';
 import { monsterArtIds, monsterArtSvg } from '../data/monsterArt';
 import './Landing.css';
 
-// The finished monsters (line-art). Hovering מגדיר מפלצות draws a random one,
-// avoiding an immediate repeat so each hover feels like a new creature.
+// The finished monsters (line-art). The landing draws them in the background on a
+// constant loop — one creature draws in, withdraws (un-draws), then a different
+// one draws in its place — running from first load onward, independent of hover.
 const MONSTER_IDS = monsterArtIds();
 
 // Build a self-contained data: URL for a monster's line-art so HoverGraphic can
 // fetch + inline it (strokes in #BABABA to match the landing's faint graphics).
 function monsterSrc(id: string): string {
   return 'data:image/svg+xml,' + encodeURIComponent(monsterArtSvg(id, '#BABABA'));
+}
+
+// Pick a monster different from the current one, so the loop never repeats a
+// creature back-to-back.
+function pickNextMonster(current: string | null): string | null {
+  if (MONSTER_IDS.length === 0) return null;
+  const pool =
+    MONSTER_IDS.length > 1 && current
+      ? MONSTER_IDS.filter((id) => id !== current)
+      : MONSTER_IDS;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /** The monster + its on-screen box at the moment of navigation, so the catalogue
@@ -34,71 +47,48 @@ type HeroKey = 'test' | 'catalog' | 'about';
 interface Hero {
   title: string;
   blurb: string;
-  // Pool of background graphics — one is picked at random on each hover.
-  // (Today each has one; more will be added later.)
-  graphics: string[];
-  // How the graphic enters: 'fade' (filled blot <img>), 'draw' (line-art
-  // stroke-draw via HoverGraphic), or 'slide' (<img> sliding up from below).
-  reveal: 'fade' | 'draw' | 'slide';
 }
 
 // Hover heroes (Figma 381-40 מבחן, 381-58 מגדיר מפלצות, 381-101 על הפרוייקט).
+// Hovering a nav item now only swaps the bottom text — the background monster
+// loop runs on its own, unaffected by hover.
 const HERO: Record<HeroKey, Hero> = {
   test: {
-    title: 'מבחן פרשנות חזותית',
+    title: 'דימוי, רגש, מפלצת.',
     blurb:
-      'לפניכם יוצגו ארבעה דימויים מופשטים. לאחר כל דימוי כתבו תגובה חופשית וקבלו תוצאה בהתאם למה שראיתם',
-    graphics: ['/blots/hover-test.svg'],
-    reveal: 'fade',
+      'ארבעה דימויים מופשטים מתוך הספר. התגובה אליהם מובילה למפלצת אחת מתוך המגדיר, ולרגש שהיא מגלמת.',
   },
   catalog: {
     title: 'מאגר המפלצות מתוך הפרוייקט',
     blurb:
       'מאגר המפלצות של הפרויקט. כל מפלצת מוצגת עם דימוי, תרבות מקור, שיוך רגשי וטקסט מחקרי קצר.',
-    // The graphic is chosen per-hover from the finished monsters (see `enter`),
-    // so this pool is left empty.
-    graphics: [],
-    reveal: 'draw',
   },
   about: {
     title: 'המחקר ושיטת העבודה',
     blurb:
       'הסבר קצר על הקשר בין האתר לספר, מטרת המבחן, מבנה המאגר וקרדיטים לתהליך העבודה.',
-    graphics: ['/blots/hover-about.jpg'],
-    reveal: 'slide',
   },
 };
 
-function pick(pool: string[]) {
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
 export function Landing({ onStart, onCatalog, onAbout, exiting = false }: LandingProps) {
   const [hover, setHover] = useState<HeroKey | null>(null);
-  const [graphic, setGraphic] = useState<string | null>(null);
   const active = hover ? HERO[hover] : null;
 
-  // Track the last monster drawn so consecutive catalog hovers differ.
-  const lastMonster = useRef<string | null>(null);
+  // The background monster currently drawing. It starts on mount and, each time a
+  // draw completes (HoverGraphic's onDone), advances to a different creature — a
+  // constant loop behind the page. Frozen while exiting so the fade-out is clean.
+  const [bgMonster, setBgMonster] = useState<string | null>(() => pickNextMonster(null));
 
-  const enter = (key: HeroKey) => {
-    if (key === 'catalog' && MONSTER_IDS.length > 0) {
-      // Pick a different finished monster than last time, so every hover draws
-      // a new creature.
-      const pool =
-        MONSTER_IDS.length > 1
-          ? MONSTER_IDS.filter((id) => id !== lastMonster.current)
-          : MONSTER_IDS;
-      const id = pick(pool);
-      lastMonster.current = id;
-      setGraphic(monsterSrc(id));
-    } else {
-      setGraphic(pick(HERO[key].graphics));
-    }
-    setHover(key);
-  };
-  // Freeze the hover while exiting so the fade-out happens from the מבחן hover
-  // screen (the graphic + section title), not the default landing.
+  // Warm every monster's line-art into the cache on first load, so each loop swap
+  // mounts the next creature synchronously (no fetch). The gap to the next draw is
+  // then a tight, consistent beat (see gapMs below) rather than fetch-bound.
+  useEffect(() => {
+    preloadGraphics(MONSTER_IDS.map(monsterSrc));
+  }, []);
+
+  const enter = (key: HeroKey) => setHover(key);
+  // Freeze the hover while exiting so the fade-out happens from the hovered
+  // screen's text, not the default landing.
   const leave = () => {
     if (!exiting) setHover(null);
   };
@@ -117,26 +107,24 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
 
   return (
     <div className={`landing ${active ? 'landing--hover' : ''} ${exiting ? 'landing--exiting' : ''}`}>
-      {/* Corner square doubles as the shared Menu so it opens on hover here too,
-          matching every other screen. No item is "active" on the home screen. */}
-      <Menu onTest={onStart} onDefiner={() => onCatalog?.()} onAbout={onAbout} />
-
-      {active && hover && graphic && (
-        active.reveal === 'draw' ? (
-          <HoverGraphic
-            key={graphic}
-            src={graphic}
-            className={`landing__bg landing__bg--${hover}`}
-          />
-        ) : (
-          <img
-            key={graphic}
-            className={`landing__bg landing__bg--${active.reveal} landing__bg--${hover}`}
-            src={graphic}
-            alt=""
-            aria-hidden="true"
-          />
-        )
+      {/* Constant background: a monster draws in, holds, withdraws (un-draws),
+          then — after a short gap — the next creature draws in its place, looping
+          for as long as the landing is shown. The `key` forces a fresh mount per
+          creature so the next stroke-draw starts clean; onDone advances the loop
+          once the draw + hold + withdraw + gap completes. `holdMs` is the linger
+          at full draw before it withdraws; `gapMs` is the brief beat after the
+          un-draw before the next creature begins. */}
+      {bgMonster && (
+        <HoverGraphic
+          key={bgMonster}
+          src={monsterSrc(bgMonster)}
+          className="landing__bg landing__bg--catalog"
+          holdMs={120}
+          gapMs={30}
+          onDone={() => {
+            if (!exiting) setBgMonster((cur) => pickNextMonster(cur));
+          }}
+        />
       )}
 
       <nav className="landing__nav" aria-label="ניווט ראשי">
@@ -144,24 +132,23 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
           type="button"
           className="landing__nav-item landing__nav-item--right"
           onClick={() => {
-            // Ensure the test hero is showing, then begin the exit so we fade
-            // out of the מבחן hover screen.
+            // Ensure the test hero text is showing, then begin the exit.
             if (hover !== 'test') enter('test');
             onStart();
           }}
           onMouseEnter={() => enter('test')}
           onMouseLeave={leave}
         >
-          מבחן
+          <SwapText base="מבחן" hover="התחל" active={hover === 'test'} mode="fade" />
         </button>
         <button
           type="button"
           className="landing__nav-item landing__nav-item--center"
           onClick={() => {
-            // Hand the catalogue the exact monster currently drawn and its box,
-            // so it can fly that creature from here into its tile. If nothing is
-            // hovered (e.g. keyboard/click without hover), navigate plainly.
-            const id = lastMonster.current;
+            // Hand the catalogue the monster currently drawn in the background
+            // (and its on-screen box) so it can fly that creature into its tile.
+            // If none is present, navigate plainly.
+            const id = bgMonster;
             const svg = document.querySelector('.landing__bg--catalog svg');
             if (id && svg) {
               onCatalog?.({ id, rect: svg.getBoundingClientRect() });
@@ -172,7 +159,7 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
           onMouseEnter={() => enter('catalog')}
           onMouseLeave={leave}
         >
-          מגדיר מפלצות
+          <SwapText base="מגדיר מפלצות" hover="היכנס" active={hover === 'catalog'} mode="fade" />
         </button>
         <button
           type="button"
@@ -181,24 +168,14 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
           onMouseEnter={() => enter('about')}
           onMouseLeave={leave}
         >
-          על הפרוייקט
+          <SwapText base="על הפרוייקט" hover="היכנס" active={hover === 'about'} mode="fade" />
         </button>
       </nav>
 
       <div className="landing__bottom">
         <div className="landing__slot landing__slot--left">
-          {showDefault && !exiting && (
-            <p
-              className={`landing__credit ${active ? 'is-exiting' : ''}`}
-              dir="rtl"
-            >
-              פרויקט גמר 2026
-            </p>
-          )}
           {active && (
-            <p className="landing__blurb is-entering" dir="rtl">
-              {active.blurb}
-            </p>
+            <TypeText as="p" className="landing__blurb" text={active.blurb} duration={1500} />
           )}
         </div>
 
@@ -214,9 +191,12 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
             </h1>
           )}
           {active && (
-            <h1 className="landing__title landing__title--hover is-entering" dir="rtl">
-              {active.title}
-            </h1>
+            <TypeText
+              as="h1"
+              className="landing__title landing__title--hover"
+              text={active.title}
+              duration={1500}
+            />
           )}
         </div>
       </div>

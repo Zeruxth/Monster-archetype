@@ -1,5 +1,7 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Arrow } from '../components/Arrow';
+import { Lightbox } from '../components/Lightbox';
 import { Menu } from '../components/Menu';
 import { Minotaur } from '../components/Minotaur';
 import { MonsterArt, hasMonsterArt } from '../components/MonsterArt';
@@ -44,6 +46,9 @@ export function MonsterPage({
 }: MonsterPageProps) {
   const emotion = EMOTIONS[monster.emotion];
   const images = monsterImages(monster.id);
+
+  // Which gallery image is open in the lightbox (null = closed).
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // Scale the panel open from the clicked tile's centre: it starts roughly
   // tile-sized at that point and grows to fill, so the monster "changes places
@@ -108,7 +113,7 @@ export function MonsterPage({
         active="definer"
       />
 
-      <div className="monster-page__panel" ref={panelRef}>
+      <div className="monster-page__panel panel-scroll" ref={panelRef}>
         <div className="monster-page__top">
           <div className="monster-page__info">
             <h1 className="monster-page__title" dir="rtl">
@@ -175,42 +180,50 @@ export function MonsterPage({
           <div className="monster-page__art">
             <button
               type="button"
-              className="monster-page__back"
+              className="monster-page__back arrow-host"
               onClick={onBack}
               aria-label="חזרה למגדיר"
             >
-              <svg width="16" height="15" viewBox="0 0 16 15" fill="none" aria-hidden="true">
-                <path
-                  d="M1 7.5H15M9.4 1.2 15 7.5l-5.6 6.3"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Arrow direction="right" />
             </button>
             {hasMonsterArt(monster.id) ? (
-              <MonsterArt id={monster.id} className="monster-page__monster" />
+              <MonsterArt id={monster.id} className="monster-page__monster monster-hero" />
             ) : (
-              <Minotaur className="monster-page__monster" />
+              <Minotaur className="monster-page__monster monster-hero" />
             )}
           </div>
         </div>
 
         {images.length > 0 && (
           <div className="monster-page__gallery">
-            {images.map((src) => (
-              <img
-                key={src}
-                className="monster-page__image"
-                src={src}
-                alt=""
-                loading="lazy"
-              />
+            {images.map((img, i) => (
+              <button
+                key={img.src}
+                type="button"
+                className="monster-page__image-btn"
+                onClick={() => setLightboxIndex(i)}
+                aria-label={`הגדלה: ${img.title}`}
+              >
+                <img
+                  className="monster-page__image"
+                  src={img.src}
+                  alt={img.title}
+                  loading="lazy"
+                />
+              </button>
             ))}
           </div>
         )}
       </div>
+
+      {lightboxIndex !== null && (
+        <Lightbox
+          images={images}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onIndex={setLightboxIndex}
+        />
+      )}
     </div>
   );
 }

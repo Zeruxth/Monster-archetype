@@ -51,9 +51,11 @@
 
 /* ---- Text column (left) ---- */
 .result__text {
-  flex-shrink: 0;
-  width: 650px;
-  max-width: 55%;
+  /* Mirror the MonsterPage's info column: the text takes the slack while the art
+     column is a fixed 680px flush-right (below), so the monster lands at the same
+     x on both screens. */
+  flex: 1;
+  min-width: 0;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -126,17 +128,19 @@
 /* ---- Art column (right): bordered region centring the monster ---- */
 .result__art {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  /* Fixed width flush-right, matching the MonsterPage's 680px art column, so the
+     (fixed-size) monster sits at the same screen x on both screens. */
+  flex: 0 0 680px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 34px;
 }
-.result__minotaur {
-  height: 100%;
-  max-height: 600px;
-}
+/* The monster's box (its fixed 439×520 size + the shared
+   `view-transition-name: monster-hero`) lives in the global `.monster-hero` class
+   (App.css) — identical here and on the MonsterPage, so the "discover more" morph
+   carries zero scale and zero move. The reveal + drain rules below still target
+   the inner .minotaur__body / .minotaur__line paths. */
 
 /* ---- Entrance: structural frame lines draw themselves in ----
    The static column borders are replaced with absolutely-positioned spans so
@@ -273,5 +277,45 @@
   to {
     fill: var(--monster-fill, #1a1a1a);
     stroke: var(--monster-stroke, #e4e4e4);
+  }
+}
+
+/* ---- "Discover more" drain ----
+   The reverse of the reveal flood: the silhouette's fill drains to transparent
+   while its outline + interior lines darken from the resting light stroke to dark,
+   leaving a line drawing in place. Crucially this is NOT an opacity fade — the
+   shape's strokes stay fully opaque the whole way, only the FILL's alpha drops, so
+   the monster never "disappears", it resolves into its own line art. Runs first;
+   App.discoverMonster then hero-morphs that line art to the page (line → line, so
+   the morph carries only the reposition/resize, no cross-fade of the fill).
+   The new animations replace the (finished) reveal ones, which would otherwise
+   revert the paths to their seeded dash-hidden state — so each keyframe pins
+   stroke-dashoffset: 0 to keep the drawing fully struck while it drains. */
+.result.is-draining .minotaur__body {
+  animation: monster-drain 600ms ease forwards;
+}
+.result.is-draining .minotaur__line {
+  animation: monster-line-darken 600ms ease forwards;
+}
+@keyframes monster-drain {
+  from {
+    fill: var(--monster-fill, #1a1a1a);
+    stroke: var(--monster-stroke, #e4e4e4);
+    stroke-dashoffset: 0;
+  }
+  to {
+    fill: transparent;
+    stroke: #1a1a1a;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes monster-line-darken {
+  from {
+    stroke: var(--monster-stroke, #e4e4e4);
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke: #1a1a1a;
+    stroke-dashoffset: 0;
   }
 }

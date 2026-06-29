@@ -1,0 +1,84 @@
+/* ---- SwapText: typewriter hover swap ----
+   On a state change the new word is typed in character by character with a
+   blinking caret. An invisible sizer holds the full word's width so the box
+   never reflows while the visible overlay fills in; dir="rtl" makes the letters
+   appear right-to-left from the word's start. Reused for the small UI texts. */
+.swap {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Reserves the box width: both words are overlaid in a single grid cell, so the
+   box takes the WIDER of the two and never resizes when the visible word swaps —
+   the word then sits centred in that stable box instead of jumping. Never
+   shown. */
+.swap__sizer {
+  visibility: hidden;
+  display: inline-grid;
+}
+.swap__sizer-word {
+  /* Stack both words in the same cell so the column sizes to the wider one. */
+  grid-area: 1 / 1;
+}
+
+/* The visible typed-so-far text, overlaid on the sizer and aligned to the
+   inline-start (right, in RTL) so the letters grow toward the inline-end. */
+.swap__typed {
+  position: absolute;
+  inset: 0;
+  text-align: start;
+}
+
+/* ---- Fade mode: a plain opacity crossfade (no typewriter) ----
+   Used for the small nav labels. The visible word fades out; while it's at
+   opacity 0 the text swaps; then the new word fades back in. The box never
+   resizes (the sizer holds both words' max width), so the word is CENTRED in
+   that stable box — it stays middle-aligned instead of hugging an edge or
+   jumping when a short word replaces a long one. Duration comes from the `fade`
+   prop via --swap-fade. */
+.swap--fade .swap__typed {
+  transition: opacity var(--swap-fade, 160ms) ease;
+  text-align: center;
+}
+.swap--fade.is-out .swap__typed {
+  opacity: 0;
+}
+
+/* Caret: a thin bar at the typing edge; blinks only while typing. */
+.swap__caret {
+  display: inline-block;
+  width: 0.07em;
+  height: 1.05em;
+  margin-inline-start: 0.05em;
+  vertical-align: -0.14em;
+  background: currentColor;
+  opacity: 0;
+}
+.swap.is-typing .swap__caret {
+  animation: swap-caret 0.6s infinite;
+}
+@keyframes swap-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Screen-reader-only stable label (the visible spans are aria-hidden). */
+.swap__a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

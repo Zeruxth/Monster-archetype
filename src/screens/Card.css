@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 48px;
 }
 
 /* ---- Left: bordered answer card (Figma 381-246), rises in from below ---- */
@@ -70,7 +70,8 @@
   position: relative;
   width: 100%;
   border-radius: 16px;
-  background: var(--color-background);
+  /* Input surface — a step lighter than the page grey (Figma 381-249). */
+  background: #cecece;
 }
 
 /* The whole grey area is the input. It sits in flow (not absolutely filling the
@@ -158,6 +159,9 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* The arrow's hover (a corner-radius morph) is shared across controls via the
+   `.arrow-host` class on this button — see Arrow.css. */
 
 /* ---- Right: ink blot, drag to rotate (Figma 381-273 / 381-261) ---- */
 .card-screen__stage {

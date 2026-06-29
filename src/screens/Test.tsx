@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Menu } from '../components/Menu';
-import { INSTRUCTIONS_RISE_DELAY } from './Instructions';
 import './Test.css';
 
 interface TestShellProps {
@@ -19,10 +18,11 @@ interface TestShellProps {
 }
 
 /**
- * Persistent shell for the מבחן flow. The dark page, white frame and pagination
- * dots stay mounted across the instructions → cards transition (so the frame
- * never re-animates); only the body content swaps. When the phase changes the
- * dots FLIP from their old position to the new one.
+ * Persistent shell for the מבחן flow. The dark page and white frame stay mounted
+ * across the instructions → cards transition (so the frame never re-animates);
+ * only the body content swaps. The pagination dots aren't shown on the
+ * instructions screen — they rise in with the first card and then FLIP between
+ * the later phases (cards → loading → reveal).
  */
 export function TestShell({
   phase,
@@ -42,7 +42,13 @@ export function TestShell({
 
   useLayoutEffect(() => {
     const el = dotsRef.current;
-    if (!el) return;
+    // No dots in the instructions phase. Clear any stored position so that when
+    // they next appear (entering the cards phase) they rise in fresh, rather
+    // than FLIPping from a stale spot.
+    if (!el) {
+      prev.current = null;
+      return;
+    }
     const next = { top: el.offsetTop, left: el.offsetLeft };
     // On reveal the dots simply fade out, so don't FLIP them to a new spot.
     if (prev.current && phase !== 'reveal') {
@@ -81,38 +87,40 @@ export function TestShell({
       <div className={`test__frame test__frame--${phase}`}>
         {children}
 
-        {/* Dots persist across the whole flow — they FLIP from the intro centre
-            to the cards bottom, fill in their card's colour as each is reached,
-            then FLIP back up under the loading pill and loop. They never unmount,
-            so the rise-in only plays once (on the intro mount). */}
-        <div
-          ref={dotsRef}
-          className={`test__dots ${phase === 'loading' ? 'test__dots--loading' : ''} ${phase === 'reveal' ? 'test__dots--out' : ''}`}
-          style={{ animationDelay: `${INSTRUCTIONS_RISE_DELAY}ms` }}
-          aria-hidden="true"
-        >
-          {Array.from({ length: total }).map((_, i) => {
-            const on = i <= cardIndex;
-            const fill = dotColors?.[i] || 'var(--color-text-primary)';
-            // Gradient fills go through `background` (a gradient isn't a valid
-            // background-color); the border drops out so only the fill shows.
-            const isGradient = fill.includes('gradient');
-            return (
-              <span
-                key={i}
-                className={`test__dot ${on ? 'test__dot--on' : ''}`}
-                style={
-                  on
-                    ? {
-                        background: fill,
-                        borderColor: isGradient ? 'transparent' : fill,
-                      }
-                    : undefined
-                }
-              />
-            );
-          })}
-        </div>
+        {/* No dots on the instructions screen. From the cards phase on they rise
+            in at the bottom with the first card, fill in their card's colour as
+            each is reached, then FLIP up under the loading pill and loop, and
+            fade out on reveal. They stay mounted across those later phases, so
+            the rise-in plays once (when the cards phase begins). */}
+        {phase !== 'instructions' && (
+          <div
+            ref={dotsRef}
+            className={`test__dots ${phase === 'loading' ? 'test__dots--loading' : ''} ${phase === 'reveal' ? 'test__dots--out' : ''}`}
+            aria-hidden="true"
+          >
+            {Array.from({ length: total }).map((_, i) => {
+              const on = i <= cardIndex;
+              const fill = dotColors?.[i] || 'var(--color-text-primary)';
+              // Gradient fills go through `background` (a gradient isn't a valid
+              // background-color); the border drops out so only the fill shows.
+              const isGradient = fill.includes('gradient');
+              return (
+                <span
+                  key={i}
+                  className={`test__dot ${on ? 'test__dot--on' : ''}`}
+                  style={
+                    on
+                      ? {
+                          background: fill,
+                          borderColor: isGradient ? 'transparent' : fill,
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

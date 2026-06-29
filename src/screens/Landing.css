@@ -6,7 +6,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end; /* right */
-  justify-content: space-between;
+  /* Only the bottom block is in normal flow now (the nav + background art are
+     absolutely placed, and the corner menu was removed from the home screen), so
+     anchor it to the bottom. (Was space-between to balance against the menu.) */
+  justify-content: flex-end;
   padding: var(--frame-pad);
   background: var(--color-bg-dark);
   color: var(--color-surface-light);
@@ -16,31 +19,11 @@
 }
 
 /* Exit: fade the content out (500ms) while the dark .landing background stays,
-   so the next screen's white frame scales in over an unbroken backdrop. The
-   logo is excluded — it persists across screens (accounted for in the design). */
-.landing--exiting > *:not(.menu) {
+   so the next screen's white frame scales in over an unbroken backdrop. */
+.landing--exiting > * {
   opacity: 0;
   transition: opacity 500ms ease;
   pointer-events: none;
-}
-
-/* ---- Corner square = shared Menu, top-right ----
-   It persists across screens (the next screen renders its own square in the same
-   spot), so it's excluded from the exit fade above. On this dark page the square
-   gets the light treatment, matching definer / test / result. */
-.landing .menu {
-  z-index: 1;
-}
-.landing .menu__square {
-  background: var(--color-surface-light);
-}
-.landing .menu:hover .menu__square,
-.landing .menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-surface-light);
-}
-.landing .menu__link {
-  color: var(--color-surface-light);
 }
 
 /* ---- Hover background graphic (per-hero placement) ---- */
@@ -131,9 +114,9 @@
   left: var(--frame-pad);
   right: var(--frame-pad);
   transform: translateY(-50%);
-  height: 32px;
+  height: 26px;
   font-family: 'The Basics', 'Assistant', sans-serif;
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1;
 }
 
@@ -152,10 +135,17 @@
   font-weight: 400;
   white-space: nowrap;
   cursor: pointer;
-  transition: font-weight var(--t-ui);
+  transition: font-weight var(--t-ui), opacity var(--t-ui);
 }
 .landing__nav-item:hover {
   font-weight: 700;
+}
+/* Hovering one nav item fades the others out, so the choice in focus stands
+   alone. `.landing__nav:hover` is true whenever any item (a DOM descendant) is
+   hovered, even though the items sit outside the nav's own 26px band; the
+   :not(:hover) then dims every item except the one under the cursor. */
+.landing__nav:hover .landing__nav-item:not(:hover) {
+  opacity: 0;
 }
 
 /* מבחן pinned right, על הפרויקט pinned left, מגדיר מפלצות stays screen-centered.
@@ -204,13 +194,6 @@
   justify-content: flex-end;
 }
 
-.landing__credit {
-  margin: 0;
-  font-family: 'The Basics', 'Assistant', sans-serif;
-  font-size: 22px;
-  line-height: 1;
-}
-
 /* Hover: secondary blurb fills the 315px column (Figma 381-157). */
 .landing__blurb {
   margin: 0;
@@ -232,9 +215,13 @@
 }
 
 /* Hover: title becomes the section title and wraps within the slot
-   (Figma 381-158: flex-[1_0_0] min-w-px). */
+   (Figma 381-158: flex-[1_0_0] min-w-px). Capped at 1000px so the longer
+   section titles break two-words-per-line (e.g. מאגר המפלצות / מתוך הפרוייקט)
+   instead of stretching across the full slot on wide screens; the slot's
+   justify-content: flex-end keeps the capped block pinned to the right. */
 .landing__title--hover {
   width: 100%;
+  max-width: 1000px;
   white-space: normal;
 }
 

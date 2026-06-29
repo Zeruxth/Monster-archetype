@@ -1,14 +1,21 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { Monster } from '../data/monsters';
 import { Button } from '../components/Button';
 import { Menu } from '../components/Menu';
 import { Minotaur } from '../components/Minotaur';
 import './Result.css';
 
+// How long the filled silhouette takes to drain into a line drawing before the
+// page hero-morph begins (kept in sync with the .is-draining rules in Result.css).
+const DRAIN_MS = 600;
+
 interface ResultProps {
   monster: Monster;
   /** Reserved for the "all monsters" catalogue link (wired up later). */
   onAllMonsters: () => void;
+  /** "discover more" → open this monster's inner page. The art column's box is
+      handed up so the page can scale open from the monster (zoom-to-discover). */
+  onDiscover: (origin?: DOMRect) => void;
   /** Menu → "מבחן": restart the Rorschach experience. */
   onTest?: () => void;
   /** Menu → "מגדיר": open the monster catalogue. */
@@ -24,8 +31,31 @@ interface ResultProps {
  * split into a text column (name + "why this monster" + cultural blurb) and a
  * bordered art column holding the filled monster graphic.
  */
-export function Result({ monster, onTest, onDefiner, onAbout, onHome }: ResultProps) {
+export function Result({
+  monster,
+  onDiscover,
+  onTest,
+  onDefiner,
+  onAbout,
+  onHome,
+}: ResultProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  // The art column's box, measured at click time so the inner page can scale
+  // open from the monster (see App.openMonster / MonsterPage origin).
+  const artRef = useRef<HTMLDivElement>(null);
+
+  // "Discover more" plays in two beats. First the filled silhouette DRAINS in
+  // place: its fill goes transparent while the outline + interior lines darken
+  // into a line drawing — no opacity fade, the shape never disappears. Only once
+  // that's done do we hand up to onDiscover, which hero-morphs the (now) line-art
+  // to the monster's page. `draining` gates the first beat.
+  const [draining, setDraining] = useState(false);
+  const handleDiscover = () => {
+    if (draining) return;
+    const rect = artRef.current?.getBoundingClientRect();
+    setDraining(true);
+    window.setTimeout(() => onDiscover(rect), DRAIN_MS);
+  };
 
   // The monster strokes draw at a constant 1 screen-px (vector-effect:
   // non-scaling-stroke), which means stroke-dasharray is measured in screen px
@@ -50,7 +80,7 @@ export function Result({ monster, onTest, onDefiner, onAbout, onHome }: ResultPr
   }, []);
 
   return (
-    <div className="result" ref={rootRef}>
+    <div className={`result${draining ? ' is-draining' : ''}`} ref={rootRef}>
       <Menu
         onTest={onTest}
         onDefiner={onDefiner}
@@ -59,7 +89,7 @@ export function Result({ monster, onTest, onDefiner, onAbout, onHome }: ResultPr
         active="test"
       />
 
-      <div className="result__panel">
+      <div className="result__panel panel-scroll">
         <div className="result__row">
           <div className="result__text">
             <div className="result__title-wrap">
@@ -79,20 +109,24 @@ export function Result({ monster, onTest, onDefiner, onAbout, onHome }: ResultPr
                 <p className="result__why-text" dir="rtl">
                   {monster.why}
                 </p>
-                <Button variant="link" arrow onClick={() => {}}>
-                  גלה עוד על {monster.he}
+                <Button
+                  variant="link"
+                  arrow
+                  onClick={handleDiscover}
+                >
+                  סיים את המבחן וגלה עוד על {monster.heDefinite ?? `ה${monster.he}`}
                 </Button>
               </div>
             </div>
           </div>
 
-          <div className="result__art">
+          <div className="result__art" ref={artRef}>
             {/* Art-column frame lines: the vertical divider draws top→bottom,
                 then the top/bottom rules draw outward from it. */}
             <span className="result__rule result__rule--v" aria-hidden="true" />
             <span className="result__rule result__rule--t" aria-hidden="true" />
             <span className="result__rule result__rule--b" aria-hidden="true" />
-            <Minotaur className="result__minotaur" />
+            <Minotaur className="result__minotaur monster-hero" />
           </div>
         </div>
       </div>
