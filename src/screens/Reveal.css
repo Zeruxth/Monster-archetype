@@ -5,7 +5,7 @@
   flex-direction: column;
   align-items: flex-end; /* RTL */
   gap: 24px;
-  width: 476px;
+  width: 520px;
   max-width: 100%;
   padding: 24px;
   border: 1px solid var(--color-border);
