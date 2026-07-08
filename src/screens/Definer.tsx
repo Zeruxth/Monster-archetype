@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import { Menu } from '../components/Menu';
-import { MonsterCard } from '../components/MonsterCard';
+import { MonsterCard, CATALOGUE_SCALE } from '../components/MonsterCard';
 import { MonsterArt } from '../components/MonsterArt';
 import { MONSTERS } from '../data/monsters';
 import type { Monster } from '../data/monsters';
@@ -135,7 +135,8 @@ export function Definer({ onTest, onAbout, onHome, onOpen, origin = null }: Defi
 
       {origin && (
         <div className="definer__fly" ref={flyRef} aria-hidden="true">
-          <MonsterArt id={origin.id} />
+          {/* Match the tile's shrink so the clone doesn't pop 10% on hand-off. */}
+          <MonsterArt id={origin.id} scale={CATALOGUE_SCALE[origin.id]} />
         </div>
       )}
     </div>

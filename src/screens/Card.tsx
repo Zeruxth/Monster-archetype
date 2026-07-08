@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Arrow } from '../components/Arrow';
-import type { CardDef } from '../data/cards';
+import { Blot } from '../components/Blot';
+import type { TestCard } from '../data/cards';
 import './Card.css';
 
 interface CardBodyProps {
-  card: CardDef;
+  card: TestCard;
   isLast: boolean;
   onSubmit: (text: string, responseMs: number) => void;
 }
@@ -18,7 +19,7 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
   useEffect(() => {
     setText('');
     shownAt.current = performance.now();
-  }, [card.index]);
+  }, [card.shapeId]);
 
   // Grow the text field to fit the typed content. The card is centred in the
   // row, so the growth reads as symmetric — the card expands up AND down from
@@ -63,7 +64,7 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
       <div className="card-screen__answer">
         <div className="card-screen__answer-inner">
           <h2 className="card-screen__question" dir="rtl">
-            מה אתה רואה?
+            מה אתם רואים?
           </h2>
           <div className="card-screen__field">
             <textarea
@@ -72,7 +73,7 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={1}
-              aria-label="מה אתה רואה?"
+              aria-label="מה אתם רואים?"
               autoFocus
             />
             <button
@@ -88,34 +89,14 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
         </div>
       </div>
 
-      {/* Right: ink blot (changes per card). A single masked element — the blot
-          SVG is the mask and the fill is a gradient (dark at top, emotion tint
-          at the bottom for tinted cards). One mask = one clean edge (layering a
-          separate tint over an <img> left a noisy fringe on the stroke). The
-          tint is static — a fill motion could read as the inkblot itself moving. */}
+      {/* Right: ink blot (changes per card). The Blot component masks the shape's
+          silhouette SVG and paints the colour treatment behind it (black / spot /
+          full — see Blot.tsx). One mask = one clean antialiased edge. The sized
+          wrapper fixes the blot's width and fades it in as a unit. */}
       <div className="card-screen__stage">
-        {card.image &&
-          (card.colored ? (
-            // Full-colour blot: the SVG already carries its own colours (its own
-            // silhouette mask over blurred colour fields), so paint it straight
-            // as one image — no extra mask, so the edge stays a single clean
-            // rasterisation. Fades in as a unit like the masked cards.
-            <div
-              className="blot blot--colored"
-              style={{ backgroundImage: `url(${card.image})` }}
-            />
-          ) : (
-            <div
-              className="blot"
-              style={{
-                WebkitMaskImage: `url(${card.image})`,
-                maskImage: `url(${card.image})`,
-                background: card.tint
-                  ? `linear-gradient(to top, ${card.tint} 0%, ${card.tint} 8%, var(--color-text-primary) 56%)`
-                  : 'var(--color-text-primary)',
-              }}
-            />
-          ))}
+        <div className="card-screen__blot">
+          <Blot shapeId={card.shapeId} mode={card.mode} />
+        </div>
       </div>
     </div>
   );

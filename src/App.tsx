@@ -11,10 +11,12 @@ import { Result } from './screens/Result';
 import { Definer } from './screens/Definer';
 import { MonsterPage } from './screens/MonsterPage';
 import { About } from './screens/About';
-import { CARDS } from './data/cards';
-import { resolveMonster } from './data/monsters';
+import { BlotGallery } from './screens/BlotGallery';
+import { buildDeck, DECK_SIZE } from './data/cards';
+import type { TestCard } from './data/cards';
 import type { CardAnswer, Monster } from './data/monsters';
 import { EMOTIONS } from './data/emotions';
+import { analyze } from './services/analysis';
 import './App.css';
 
 type Step =
@@ -32,11 +34,27 @@ type Step =
 // mounts (kept in sync with the frame-exit-down animation in Test.css).
 const REVEAL_EXIT_MS = 500;
 
+// A floor on the loading beat so a fast (or fast-failing) analysis doesn't flash
+// the dots and jump straight to the reveal. The two Claude calls usually take a
+// few seconds; this only bites when they resolve — or error out — quickly.
+const MIN_LOADING_MS = 1400;
+
+// Dev-only: open the app at #blots to review the blot variation library. Read
+// once at load (a module constant) so App's hook order never changes at runtime.
+const SHOW_BLOTS =
+  typeof window !== 'undefined' && window.location.hash === '#blots';
+
 export default function App() {
   const [step, setStep] = useState<Step>('landing');
   const [cardIndex, setCardIndex] = useState(0);
   const [answers, setAnswers] = useState<CardAnswer[]>([]);
+  // The four blot cards for this run — four distinct shapes over the fixed arc
+  // black → spot → full → black, rebuilt each time the test begins so it varies.
+  const [deck, setDeck] = useState<TestCard[]>(() => buildDeck());
   const [monster, setMonster] = useState<Monster | null>(null);
+  // True when the shown monster is the Vritra error-fallback (both API attempts
+  // failed) — the result screen swaps its "discover" link for a "נסה שוב" retry.
+  const [isFallback, setIsFallback] = useState(false);
   const [exiting, setExiting] = useState(false);
   // The loading pill's box, captured at the loading→reveal hand-off so the reveal
   // card can morph (expand) out of it. null = no morph (e.g. dev jump).
@@ -66,29 +84,45 @@ export default function App() {
   const beginCards = () => {
     setCardIndex(0);
     setAnswers([]);
+    setDeck(buildDeck());
     setStep('cards');
+  };
+
+  // Run the two-call analysis (emotion → monster) under the loading dots, then
+  // hand off to the reveal. Shared by the last-card submit and the Vritra retry.
+  // `analyze` never rejects — it retries once internally, then resolves to the
+  // Vritra fallback — so the loading dots always give way to a real result.
+  const runAnalysis = (finalAnswers: CardAnswer[]) => {
+    setStep('loading');
+    const startedAt = Date.now();
+    void analyze(finalAnswers).then((result) => {
+      // Hold the loading beat to its floor so a fast resolve doesn't flash the dots.
+      const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
+      window.setTimeout(() => {
+        // Measure the pill (still mounted) so the reveal card can expand from it.
+        const pill = document.querySelector('.loading__pill');
+        setMorphFrom(pill ? pill.getBoundingClientRect() : null);
+        setMonster(result.monster);
+        setIsFallback(result.isFallback);
+        setStep('reveal');
+      }, wait);
+    });
   };
 
   const handleCardSubmit = (text: string, responseMs: number) => {
     const next = [...answers, { text, responseMs }];
     setAnswers(next);
-    if (cardIndex < CARDS.length - 1) {
+    if (cardIndex < DECK_SIZE - 1) {
       setCardIndex(cardIndex + 1);
     } else {
-      // Last answer in: collapse to the loading state and run the analysis. The
-      // dots loop until it resolves (so the wait can stretch as long as needed).
-      // The timeout stands in for the real analysis call, which drops in here.
-      // When it resolves we reveal the emotion; the monster comes after.
-      setStep('loading');
-      window.setTimeout(() => {
-        // Measure the pill (still mounted) so the reveal card can expand from it.
-        const pill = document.querySelector('.loading__pill');
-        setMorphFrom(pill ? pill.getBoundingClientRect() : null);
-        setMonster(resolveMonster(next));
-        setStep('reveal');
-      }, 2600);
+      // Last answer in: collapse to the loading state and run the real analysis.
+      // The dots loop until it resolves (so the wait can stretch as long as needed).
+      runAnalysis(next);
     }
   };
+
+  // Vritra fallback → "נסה שוב": re-run the whole pipeline with the same answers.
+  const retryAnalysis = () => runAnalysis(answers);
 
   // Reveal → Result: slide the רגש frame down and out (ease-out), then swap to
   // the monster screen, which draws its own lines / text / monster in.
@@ -190,7 +224,7 @@ export default function App() {
     step === 'reveal';
   const mainKey = inTest ? 'test' : step;
   // The shell enters via its own white-frame scale animation, so it opts out of
-  // the shared screen fade-in (which would otherwise flash the body grey). The
+  // the shared screen fade-in (which would double up on that entrance). The
   // result also opts out: its white panel is the SAME box as the reveal frame, so
   // it must stay solid/continuous (only its inner card slid away) rather than
   // fading the whole surface back in.
@@ -204,6 +238,10 @@ export default function App() {
     inTest || step === 'result' || definerFlyIn || step === 'monster'
       ? 'app__screen'
       : 'app__screen fade-in';
+
+  // Dev-only blot library review sheet (open at #blots). Guard sits AFTER all
+  // hooks + handlers so React's hook order stays fixed across renders.
+  if (SHOW_BLOTS) return <BlotGallery />;
 
   return (
     <div className="app">
@@ -234,11 +272,11 @@ export default function App() {
               step === 'cards'
                 ? cardIndex
                 : step === 'loading' || step === 'reveal'
-                  ? CARDS.length - 1
+                  ? DECK_SIZE - 1
                   : -1
             }
-            total={CARDS.length}
-            dotColors={CARDS.map((c) => c.dotFill ?? c.tint ?? null)}
+            total={DECK_SIZE}
+            dotColors={deck.map((c) => c.dotFill)}
             onTest={beginCards}
             onDefiner={goDefiner}
             onAbout={goAbout}
@@ -260,8 +298,8 @@ export default function App() {
             ) : (
               <CardBody
                 key={cardIndex}
-                card={CARDS[cardIndex]}
-                isLast={cardIndex === CARDS.length - 1}
+                card={deck[cardIndex]}
+                isLast={cardIndex === DECK_SIZE - 1}
                 onSubmit={handleCardSubmit}
               />
             )}
@@ -271,6 +309,8 @@ export default function App() {
         {step === 'result' && monster && (
           <Result
             monster={monster}
+            isFallback={isFallback}
+            onRetry={retryAnalysis}
             onAllMonsters={goDefiner}
             onDiscover={(rect) => discoverMonster(monster, rect)}
             onTest={goTest}

@@ -1,0 +1,20 @@
+name = "monster-archetype-api"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+# The Anthropic API key is NOT stored here. Set it as an encrypted secret instead:
+#   wrangler secret put ANTHROPIC_API_KEY
+# (Secrets live server-side in Cloudflare and are never committed or shipped.)
+#
+# The token that guards the /stats and /export.csv read endpoints is also a
+# secret (pick any password), so the collected results stay private:
+#   wrangler secret put STATS_TOKEN
+
+# D1 database for the results log (one row per completed analysis; see schema.sql).
+# Create it once, then paste the printed id below:
+#   wrangler d1 create monster-archetype-results
+#   wrangler d1 execute monster-archetype-results --remote --file=./schema.sql
+[[d1_databases]]
+binding = "DB"
+database_name = "monster-archetype-results"
+database_id = "a0fe3afb-9806-4d60-bd7f-2ed587c2f93b"

@@ -5,6 +5,7 @@ import { Lightbox } from '../components/Lightbox';
 import { Menu } from '../components/Menu';
 import { Minotaur } from '../components/Minotaur';
 import { MonsterArt, hasMonsterArt } from '../components/MonsterArt';
+import { MonsterSolid, hasSolidArt } from '../components/MonsterSolid';
 import { EMOTIONS } from '../data/emotions';
 import { monsterImages } from '../data/monsterImages';
 import type { Monster } from '../data/monsters';
@@ -186,7 +187,17 @@ export function MonsterPage({
             >
               <Arrow direction="right" />
             </button>
-            {hasMonsterArt(monster.id) ? (
+            {/* Mirror the Result's art choice so the "discover more" hero-morph is
+                a true identity: the Result reveals the finished SILHOUETTE
+                (MonsterSolid) and drains it to line art, so this page must show that
+                SAME drawing (same component, same viewBox, same paths) — the CSS
+                below repaints it from filled to line so it equals the drained
+                end-state exactly. MonsterArt (the catalogue's outline) stays only as
+                a fallback for any monster that has outline art but no silhouette;
+                the filled Minotaur is the last resort. */}
+            {hasSolidArt(monster.id) ? (
+              <MonsterSolid id={monster.id} className="monster-page__monster monster-hero" />
+            ) : hasMonsterArt(monster.id) ? (
               <MonsterArt id={monster.id} className="monster-page__monster monster-hero" />
             ) : (
               <Minotaur className="monster-page__monster monster-hero" />

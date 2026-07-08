@@ -6,17 +6,47 @@
   height: 24px;
 }
 
-/* The persistent square: solid by default, outlined on hover. */
-.menu__square {
+/* The persistent asterisk mark (Figma 356-136 / 558-1102). The SVG is inlined
+   (not a mask) so it can switch from a solid fill to a 1px outline on hover:
+   default = filled asterisk; hover = hollow 1px stroke, revealed alongside the
+   links. `currentColor` drives both the fill and the stroke, and the variant
+   sets that colour (see .menu--light / .menu--dark below). */
+.menu__logo {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: var(--color-text-primary);
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: background-color var(--t-ui), border-color var(--t-ui);
+  /* Colour is inherited by the SVG via currentColor; set per variant. */
+}
+.menu__logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Let the 1px stroke breathe past the tight 24×24 viewBox instead of clipping
+     at the asterisk's outer points. */
+  overflow: visible;
+}
+/* Default: a solid asterisk. Hover: the fill fades out as a 1px outline draws
+   in. `non-scaling-stroke` keeps the outline a true 1px regardless of scaling. */
+.menu__logo path {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+  fill-opacity: 1;
+  vector-effect: non-scaling-stroke;
+  transition:
+    fill-opacity var(--t-ui),
+    stroke-width var(--t-ui);
+}
+/* Keyed off the whole menu so the asterisk goes hollow in lockstep with the
+   links revealing (matching the component's single "Hover" state). */
+.menu:hover .menu__logo path,
+.menu:focus-within .menu__logo path {
+  fill-opacity: 0;
+  stroke-width: 1px;
 }
 
 /* Links sit to the left of the square, hidden until hover. The 15px offset from
@@ -38,12 +68,6 @@
   transition: opacity var(--t-ui), transform var(--t-ui);
 }
 
-.menu:hover .menu__square,
-.menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-text-primary);
-}
-
 .menu:hover .menu__links,
 .menu:focus-within .menu__links {
   opacity: 1;
@@ -62,7 +86,7 @@
   font-family: 'The Basics', 'Assistant', sans-serif;
   font-size: 18px;
   line-height: 1;
-  color: var(--color-text-primary);
+  /* Link colour comes from the .menu--light / .menu--dark variant (see below). */
   cursor: pointer;
   transition: opacity 150ms ease;
 }
@@ -77,4 +101,23 @@
    bottom-border treatment of the link button (.btn--link). */
 .menu__link--active {
   border-bottom-color: currentColor;
+}
+
+/* ---- Colour variants (Figma 356-136) ----
+   `light` — light asterisk + links, for the dark surfaces most screens use.
+   `dark`  — dark asterisk + links, for light surfaces (e.g. the test's white
+   frame). The variant sets `color`, which the asterisk inherits through
+   `currentColor` (for both its fill and stroke) and the links use directly. */
+.menu--light .menu__logo {
+  color: var(--color-surface-light);
+}
+.menu--light .menu__link {
+  color: var(--color-surface-light);
+}
+
+.menu--dark .menu__logo {
+  color: var(--color-text-primary);
+}
+.menu--dark .menu__link {
+  color: var(--color-text-primary);
 }

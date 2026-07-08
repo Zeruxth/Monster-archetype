@@ -67,10 +67,18 @@
    nothing visibly resizes.) Applied as a class at the Result + MonsterPage call
    sites; future monster screens just add `monster-hero` to inherit the pin. */
 .monster-hero {
-  width: 439px;
-  height: 520px;
-  max-width: none;
-  max-height: none;
+  /* Fluid half-column sizing: the art column is now 50% of the panel (see the
+     Result / MonsterPage art columns), and the monster grows with it — ~78% of the
+     column width — so it fills its half with breathing room and scales up on wider
+     screens. A fixed aspect-ratio (matching the Result's Minotaur) keeps the BOX
+     identical on both screens, so the discover-more hero-morph still carries zero
+     scale / zero move; each monster's art letterboxes inside via the SVG's default
+     preserveAspectRatio "meet". Capped so it can't overrun on very wide/short
+     displays. */
+  width: min(78%, 700px);
+  aspect-ratio: 439 / 520;
+  height: auto;
+  max-height: 80vh;
   view-transition-name: monster-hero;
 }
 

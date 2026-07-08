@@ -8,26 +8,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* logo pinned right */
-  gap: 16px;
+  /* The white frame fills the padded dark page; the menu now lives inside it
+     (pinned to the frame's own top-right), so no menu row sits above it. */
   padding: var(--frame-pad);
   /* Same dark website background as the landing, so the frame persists and only
      its contents change between phases. */
   background: var(--color-bg-dark);
-}
-
-/* The shared Menu defaults to a dark square (for light screens); on this dark
-   page it needs the light treatment, matching the landing logo. */
-.test .menu__square {
-  background: var(--color-surface-light);
-}
-.test .menu:hover .menu__square,
-.test .menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-surface-light);
-}
-.test .menu__link {
-  color: var(--color-surface-light);
 }
 
 /* ---- White rounded frame filling the dark page ---- */
@@ -48,6 +34,16 @@
      `backwards` releases the transform once settled so descendants render crisp. */
   transform-origin: 100% 50%;
   animation: frame-scale-in 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* The menu sits inside the frame, 24px from its top-right corner (Figma 487-379).
+   Absolute so it ignores the frame's 48px content padding and clears the centred
+   body; its links still reveal to the asterisk's left. */
+.test .menu {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
 }
 
 /* Instructions phase: intro copy is vertically centred as a group with the dots.

@@ -76,15 +76,19 @@ export function TestShell({
 
   return (
     <div className="test">
-      <Menu
-        onTest={onTest}
-        onDefiner={onDefiner}
-        onAbout={onAbout}
-        onHome={onHome}
-        active="test"
-      />
-
       <div className={`test__frame test__frame--${phase}`}>
+        {/* The menu lives INSIDE the white frame (Figma 487-379): a dark asterisk
+            pinned 24px from the frame's top-right corner. `variant="dark"` because
+            the frame surface is light (unlike the other screens' dark pages). */}
+        <Menu
+          onTest={onTest}
+          onDefiner={onDefiner}
+          onAbout={onAbout}
+          onHome={onHome}
+          active="test"
+          variant="dark"
+        />
+
         {children}
 
         {/* No dots on the instructions screen. From the cards phase on they rise

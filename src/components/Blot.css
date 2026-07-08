@@ -1,0 +1,14 @@
+/* Hybrid Rorschach blot: the silhouette SVG (set inline per shape) is a CSS
+   alpha mask; the emotion colour is painted as the element's `background` (a flat
+   fill, a vertical wash, or mirrored radial blobs — see Blot.tsx). One mask = one
+   clean antialiased edge. The element fills its container's width and takes the
+   shape's own aspect-ratio (also set inline) so the mask renders undistorted. */
+.blot-art {
+  width: 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}

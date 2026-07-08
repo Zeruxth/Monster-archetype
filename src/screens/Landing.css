@@ -106,6 +106,33 @@
   transform: translate(-50%, -50%);
 }
 
+/* ---- Brand logo: the asterisk mark pinned to the bottom-left corner
+   (Figma 558-1273), diagonally opposite the title. At rest the bottom-left slot
+   is empty so the logo sits there; on hover the hero blurb fills that slot, so
+   the logo fades out to hand the corner over. Its inset (left/bottom
+   var(--frame-pad)) matches the padded content edge the nav + title align to. */
+.landing__logo {
+  position: absolute;
+  z-index: 1;
+  left: var(--frame-pad);
+  bottom: var(--frame-pad);
+  width: 64px;
+  height: 57px;
+  fill: var(--color-surface-light);
+  /* Decorative — never intercept clicks meant for the nav/blurb beneath it. */
+  pointer-events: none;
+  transition: opacity var(--t-ui);
+}
+/* Hover any nav item → the blurb takes the bottom-left slot, so the logo yields. */
+.landing--hover .landing__logo {
+  opacity: 0;
+}
+/* First-entrance intro: hold hidden through the lone-background beat, then fade
+   in on the same 1000ms delay as the nav (see the intro block below). */
+.landing--intro .landing__logo {
+  animation: landing-fade 1000ms ease 1000ms backwards;
+}
+
 /* ---- Nav ("Frame 37"): pinned to the vertical middle of the screen ---- */
 .landing__nav {
   position: absolute;
@@ -353,7 +380,8 @@
   .landing--intro .landing__nav-item--right,
   .landing--intro .landing__nav-item--center,
   .landing--intro .landing__nav-item--left,
-  .landing--intro .landing__title {
+  .landing--intro .landing__title,
+  .landing--intro .landing__logo {
     animation: none;
   }
 }

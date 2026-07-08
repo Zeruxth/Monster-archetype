@@ -23,20 +23,6 @@
   background: var(--color-bg-dark);
 }
 
-/* The shared Menu defaults to a dark square; on this dark page it needs the
-   light treatment, matching the landing / result. */
-.monster-page .menu__square {
-  background: var(--color-surface-light);
-}
-.monster-page .menu:hover .menu__square,
-.monster-page .menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-surface-light);
-}
-.monster-page .menu__link {
-  color: var(--color-surface-light);
-}
-
 /* ---- Scrolling light panel ---- */
 .monster-page__panel {
   flex: 1;
@@ -70,9 +56,9 @@
 }
 
 .monster-page__info {
-  /* The text column takes up the slack on wide screens: the art frame is a fixed
-     size (below), so any extra panel width flows into the text instead. */
-  flex: 1;
+  /* Exactly half the panel (the art column is the other half), so the text and the
+     monster split the page 50/50 — matching the Result. */
+  flex: 0 0 50%;
   min-width: 0;
   padding: 24px;
   display: flex;
@@ -159,11 +145,11 @@
 /* ---- Art column (left visually): bordered region centring the monster ---- */
 .monster-page__art {
   position: relative;
-  /* Fixed-size frame: it never grows with the screen (the text column does that
-     instead), so the monster's bordered box stays the same on larger displays.
-     Narrower than before so the monster reads smaller and the text column gets
-     more room. */
-  flex: 0 0 680px;
+  /* Half the panel: the text column and the monster each take 50% (matches the
+     Result). The monster sizes off this column (see .monster-hero) and grows with
+     it on wider screens. */
+  flex: 0 0 50%;
+  min-width: 0;
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -187,6 +173,27 @@
    SVG's default preserveAspectRatio "meet" (a wide monster scales down to the box
    width; a narrow one gets side whitespace), so the element box stays a constant
    439×520 here and the discover-more morph carries zero scale / zero move. */
+
+/* The page shows the finished SILHOUETTE (MonsterSolid, which reuses the Minotaur
+   classes) rendered as a STATIC line drawing — the exact end-state the Result's
+   "discover more" drain resolves to: no fill, every stroke dark at a constant
+   1 screen-px. Matching it precisely makes the hero-morph a true identity for all
+   finished monsters — the drained line art on the Result and this drawing are the
+   same picture, so the morph only repositions it, no repaint. `currentColor` here
+   is `--color-text-primary` (#1A1A1A, set on .monster-page__art), i.e. the same
+   dark the drain lands on. The Result's reveal/drain @keyframes are scoped under
+   `.result`, so nothing animates here; this is purely the resting drawing. */
+.monster-page .minotaur__body {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.monster-page .minotaur__line {
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
 
 /* Back arrow (top-right of the art column) → catalogue. */
 .monster-page__back {

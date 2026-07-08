@@ -37,7 +37,14 @@ html {
 body {
   margin: 0;
   direction: rtl;
-  background: var(--color-background);
+  /* Base surface behind everything. Every screen root is the dark surface
+     (#242424), so the body must match it: the non-test screens mount inside a
+     <main> that fades opacity 0→1, and #root/.app/main are all transparent — so
+     during that fade the body is the only backdrop showing. A light base (the
+     old #BABABA) flashed through as a near-white blink before the dark screen
+     became opaque; matching the dark surface makes the fade a clean, flash-free
+     content reveal (and dark-on-load matches the landing). */
+  background: var(--color-bg-dark);
   color: var(--color-text-primary);
   font-family: 'The Basics', 'Assistant', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

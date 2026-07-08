@@ -3,6 +3,7 @@ import type { Monster } from '../data/monsters';
 import { Button } from '../components/Button';
 import { Menu } from '../components/Menu';
 import { Minotaur } from '../components/Minotaur';
+import { MonsterSolid, hasSolidArt } from '../components/MonsterSolid';
 import './Result.css';
 
 // How long the filled silhouette takes to drain into a line drawing before the
@@ -11,6 +12,10 @@ const DRAIN_MS = 600;
 
 interface ResultProps {
   monster: Monster;
+  /** True when this is the Vritra error-fallback — show a retry, not "discover". */
+  isFallback?: boolean;
+  /** Vritra fallback → "נסה שוב": re-run the analysis with the same answers. */
+  onRetry?: () => void;
   /** Reserved for the "all monsters" catalogue link (wired up later). */
   onAllMonsters: () => void;
   /** "discover more" → open this monster's inner page. The art column's box is
@@ -33,6 +38,8 @@ interface ResultProps {
  */
 export function Result({
   monster,
+  isFallback,
+  onRetry,
   onDiscover,
   onTest,
   onDefiner,
@@ -81,15 +88,21 @@ export function Result({
 
   return (
     <div className={`result${draining ? ' is-draining' : ''}`} ref={rootRef}>
-      <Menu
-        onTest={onTest}
-        onDefiner={onDefiner}
-        onAbout={onAbout}
-        onHome={onHome}
-        active="test"
-      />
-
       <div className="result__panel panel-scroll">
+        {/* The menu lives INSIDE the white panel (pinned to its top-right corner),
+            matching the test-shell frames that precede this screen. It also keeps
+            the menu in the same spot across the reveal→result hand-off, since the
+            result panel is the same surface the reveal frame morphs into.
+            `variant="dark"` because the panel surface is light. */}
+        <Menu
+          onTest={onTest}
+          onDefiner={onDefiner}
+          onAbout={onAbout}
+          onHome={onHome}
+          active="test"
+          variant="dark"
+        />
+
         <div className="result__row">
           <div className="result__text">
             <div className="result__title-wrap">
@@ -109,13 +122,16 @@ export function Result({
                 <p className="result__why-text" dir="rtl">
                   {monster.why}
                 </p>
-                <Button
-                  variant="link"
-                  arrow
-                  onClick={handleDiscover}
-                >
-                  סיים את המבחן וגלה עוד על {monster.heDefinite ?? `ה${monster.he}`}
-                </Button>
+                {isFallback ? (
+                  <Button variant="link" arrow onClick={onRetry}>
+                    נסה שוב
+                  </Button>
+                ) : (
+                  <Button variant="link" arrow onClick={handleDiscover}>
+                    סיים את המבחן וגלה עוד על{' '}
+                    {monster.heDefinite ?? `ה${monster.he}`}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -126,7 +142,18 @@ export function Result({
             <span className="result__rule result__rule--v" aria-hidden="true" />
             <span className="result__rule result__rule--t" aria-hidden="true" />
             <span className="result__rule result__rule--b" aria-hidden="true" />
-            <Minotaur className="result__minotaur monster-hero" />
+            {/* The finished solid-fill silhouette for the matched monster; Garuda
+                (and anything without art) falls back to the Minotaur. Both use the
+                same .minotaur__body/.minotaur__line classes, so the reveal + drain
+                animations and the dash-seeding effect below apply either way. */}
+            {hasSolidArt(monster.id) ? (
+              <MonsterSolid
+                id={monster.id}
+                className="result__minotaur monster-hero"
+              />
+            ) : (
+              <Minotaur className="result__minotaur monster-hero" />
+            )}
           </div>
         </div>
       </div>

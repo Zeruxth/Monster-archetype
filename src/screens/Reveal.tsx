@@ -18,7 +18,7 @@ type Seg = { text: string; color?: string };
 
 const MORPH_MS = 600; // pill → card box expansion
 const TEXT_START = MORPH_MS; // start writing once the box has finished growing
-const CHAR_STEP = 30; // delay between characters
+const CHAR_STEP = 12; // delay between characters (tuned for the longer reveal copy)
 const RISE_GAP = 200; // pause after the text finishes before the CTA rises
 
 const segLen = (segs: Seg[]) => segs.reduce((n, s) => n + s.text.length, 0);
@@ -127,12 +127,22 @@ export function RevealBody({
     { text: emotion.he, color },
     { text: '.' },
   ];
+  // The reveal copy is a self-contained clinical paragraph that names the
+  // emotion exactly once; tint that word in place (matching the title), then
+  // append the transitional line pointing to the monster.
+  const para = emotion.reveal;
+  const at = para.indexOf(emotion.he);
+  const paraSegs: Seg[] =
+    at === -1
+      ? [{ text: para }]
+      : [
+          { text: para.slice(0, at) },
+          { text: emotion.he, color },
+          { text: para.slice(at + emotion.he.length) },
+        ];
   const body: Seg[] = [
-    { text: 'כשצפית בדימויים, התגובות שלך הצביעו על ' },
-    { text: emotion.he, color },
-    {
-      text: `: ${emotion.reveal}. במסך הבא יוצג הייצוג המפלצתי של הרגש הזה.`,
-    },
+    ...paraSegs,
+    { text: ' המסך הבא יחשוף את הייצוג המפלצתי של רגש זה.' },
   ];
 
   const titleLen = segLen(title);

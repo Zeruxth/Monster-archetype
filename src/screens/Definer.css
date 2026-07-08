@@ -12,20 +12,6 @@
   background: var(--color-bg-dark);
 }
 
-/* The shared Menu defaults to a dark square (for light screens); on this dark
-   page it needs the light treatment, matching the landing / test / result. */
-.definer .menu__square {
-  background: var(--color-surface-light);
-}
-.definer .menu:hover .menu__square,
-.definer .menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-surface-light);
-}
-.definer .menu__link {
-  color: var(--color-surface-light);
-}
-
 /* Tiles tile edge-to-edge (Figma gap 0) and wrap to fill the page width. */
 .definer__grid {
   width: 100%;

@@ -1,0 +1,68 @@
+.blot-gallery {
+  min-height: 100vh;
+  padding: 32px;
+  background: var(--color-bg-dark);
+  color: var(--color-surface-light);
+  font-family: 'The Basics', 'Assistant', sans-serif;
+}
+
+.blot-gallery__title {
+  margin: 0 0 24px;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.blot-gallery__blot {
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.blot-gallery__row {
+  margin-bottom: 16px;
+}
+
+.blot-gallery__heading {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.blot-gallery__subheading {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+}
+
+.blot-gallery__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.blot-gallery__tile {
+  margin: 0;
+  width: 168px;
+}
+
+/* Light surface — the real blots sit on the test's light frame, so the
+   transparent gaps in the fully-coloured blots read against #E4E4E4 here too. */
+.blot-gallery__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 132px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--color-surface-light);
+}
+
+.blot-gallery__caption {
+  margin-top: 6px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.6;
+}

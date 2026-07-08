@@ -15,21 +15,12 @@
   overflow: hidden;
 }
 
-/* The shared Menu defaults to a dark square; on this dark page it needs the
-   light treatment, matching the landing / monster page. */
-.about .menu__square {
-  background: var(--color-surface-light);
-}
-.about .menu:hover .menu__square,
-.about .menu:focus-within .menu__square {
-  background: transparent;
-  border-color: var(--color-surface-light);
-}
-.about .menu__link {
-  color: var(--color-surface-light);
-}
-
-/* ---- Blurb ---- */
+/* ---- Blurb + contact: one full-width column pinned bottom-right (Figma 558-613)
+   ----
+   The blurb and its closing contact line share one right-aligned text column that
+   spans the full frame width (Figma w-1344 ≈ 100%). They read as two stacked
+   paragraphs at the same 34px size; position:relative anchors the typed overlay
+   over the hidden sizing twin. */
 .about__body {
   position: relative;
   width: 100%;
@@ -40,14 +31,12 @@
   width: 100%;
   font-family: 'The Basics', 'Assistant', sans-serif;
   font-weight: 400;
-  font-size: 40px;
+  font-size: 34px;
   line-height: 1.2;
   text-align: right;
   color: var(--color-surface-light);
   word-break: break-word;
-  /* Preserve the blank line between the blurb and the thank-you note while still
-     wrapping normally. */
-  white-space: pre-line;
+  white-space: pre-line; /* honour the \n between blurb and contact line */
 }
 
 /* Hidden twin reserves the final box; the typed copy overlays it exactly so the

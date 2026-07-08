@@ -174,30 +174,15 @@
   padding: 8px;
 }
 
-/* Single masked element: the blot SVG (set inline per card) is the mask, and an
-   inline gradient fills it (dark at top → emotion tint at the bottom for tinted
-   cards). One mask = one antialiased edge, so the stroke stays clean. */
-.blot {
+/* Sized wrapper for the Blot component. The Blot itself carries the silhouette
+   mask + colour treatment (see Blot.css / Blot.tsx); here we just fix its width
+   and fade it in. The Blot fills this width and takes its own shape's aspect
+   ratio, so the height follows the silhouette (each of the 8 differs slightly). */
+.card-screen__blot {
   width: 750px;
   max-width: 52vw;
-  /* Union aspect ratio (750 × 549.832). */
-  aspect-ratio: 750 / 549.832;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  /* Fades in as one unit, tint included. */
+  /* Fades in as one unit. */
   animation: blot-fade 1050ms ease 180ms backwards;
-}
-
-/* Full-colour blot: the SVG carries its own colours, so it's drawn as a plain
-   background image (no mask). Same box/aspect-ratio as the masked variant. */
-.blot--colored {
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
 }
 
 @keyframes blot-fade {
