@@ -18,8 +18,15 @@
 // After deploy, add the printed URL to the site build as VITE_ANALYSIS_URL.
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5-20251001';
+// Sonnet 4.5: much stronger Hebrew spelling/grammar than Haiku, and — unlike the
+// newer Sonnet 5 — it has NO adaptive "thinking". That keeps it a plain drop-in
+// that honors `temperature` and can't spend the MAX_TOKENS budget on hidden
+// reasoning (which would truncate our JSON at only 1000 tokens).
+const MODEL = 'claude-sonnet-4-5-20250929';
 const MAX_TOKENS = 1000;
+// Below the API default of 1.0 to cut random typos / spelling drift in the
+// generated Hebrew. Not 0 — a little variation keeps phrasings from repeating.
+const TEMPERATURE = 0.5;
 
 // Browser origins allowed to call this Worker. The site's key/quota is only as
 // safe as this list — keep it tight. Add your production domain(s) and any dev
@@ -75,6 +82,10 @@ EDGE CASES - EVERY RESPONSE IS A VALID RESPONSE:
 - Repeated identical answers: repetition is a pattern. Someone who writes the same thing four times is stuck on something. What are they stuck on?
 - Irrelevant content ("pizza", "football"): concrete, everyday responses often indicate avoidance of emotional depth. Can map to security (seeking the familiar) or confusion (not understanding the task).
 - NEVER refuse to give a result. NEVER tell the user their answer is invalid. Every response gets a monster.
+
+HEBREW QUALITY:
+- The Hebrew fields (emotion_he, reasoning) must be written in correct, standard modern Hebrew: accurate spelling (כתיב תקני), correct grammar, and correct gender/number agreement.
+- Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.
 
 Respond ONLY with valid JSON, no markdown, no backticks, no preamble.
 
@@ -173,6 +184,10 @@ EDGE CASE EXPLANATIONS:
 - If the user wrote something violent: reference it directly. "ראית דם, הרס, מוות." Then connect normally to the monster. Do not soften or sanitize.
 - If the user trolled: "כתבת מילים שנועדו להרחיק, לא לקרב." Then analyze what the distancing means.
 - NEVER apologize. NEVER moralize. NEVER suggest the user needs help. This is an art project, not therapy.
+
+HEBREW QUALITY:
+- The Hebrew fields (monster_he, culture, explanation, emotion) must be written in correct, standard modern Hebrew: accurate spelling (כתיב תקני), correct grammar, and correct gender/number agreement.
+- Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.
 
 RESPONSE FORMAT (JSON only, no markdown, no backticks):
 {"monster": "monster name in English", "monster_he": "שם המפלצת בעברית", "culture": "culture of origin in Hebrew", "explanation": "3-4 sentences in Hebrew connecting user's responses to this monster", "emotion": "the emotion in Hebrew", "chapter": number 1-7}`;
@@ -302,6 +317,7 @@ export default {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: MAX_TOKENS,
+          temperature: TEMPERATURE,
           system,
           messages: [{ role: 'user', content: userContent }],
         }),
