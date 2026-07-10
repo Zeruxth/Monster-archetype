@@ -1,11 +1,12 @@
 /* Instructions body (intro copy + CTA). The dark page, white frame and dots
    live in the shared shell (see Test.css); these are the frame's contents. */
 
-/* Intro copy + CTA, stacked; button sits at the left edge of the text block. */
+/* Intro copy + CTA, stacked; button sits at the right edge of the text block,
+   where the RTL copy starts. */
 .instructions__content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 16px;
 }
 
@@ -40,4 +41,17 @@
    `rise-in` keyframe is defined in Test.css (shared with the dots). */
 .instructions__cta {
   animation: rise-in 1040ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* ---- Mobile (≤700px) ----
+   The intro copy's fixed 619px column becomes the frame's full width; the
+   type steps down so the long first sentence breaks into a few clean lines. */
+@media (max-width: 700px) {
+  .instructions__content {
+    width: 100%;
+  }
+  .instructions__text {
+    width: 100%;
+    font-size: 26px;
+  }
 }

@@ -1,5 +1,8 @@
 .app {
+  /* dvh tracks the mobile browser's collapsing address bar (vh ignores it and
+     overflows); the vh line stays as a fallback for older browsers. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -79,6 +82,7 @@
   aspect-ratio: 439 / 520;
   height: auto;
   max-height: 80vh;
+  max-height: 80dvh; /* mobile: real visible viewport (vh = fallback) */
   view-transition-name: monster-hero;
 }
 

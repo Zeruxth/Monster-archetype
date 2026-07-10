@@ -106,3 +106,33 @@ p {
   font-size: 1.375rem;    /* 22px */
   line-height: 1.5;
 }
+
+/* ---- Mobile type scale (≤700px) ----
+   The desktop sizes are poster-large (composed for ~1440px frames). One
+   breakpoint steps the headline tiers down for ~390px phones; the body tiers
+   shrink less, staying comfortably readable. Screens with their own px sizes
+   add matching overrides in their own @media blocks. */
+@media (max-width: 700px) {
+  .h1 {
+    font-size: 4rem;        /* 64px */
+    line-height: 3.75rem;   /* 60px */
+  }
+  .h2-bold {
+    font-size: 1.75rem;     /* 28px */
+  }
+  .h2 {
+    font-size: 2rem;        /* 32px */
+  }
+  .h3 {
+    font-size: 1.75rem;     /* 28px */
+  }
+  .eyebrow {
+    font-size: 1.25rem;     /* 20px */
+  }
+  .b1-bold {
+    font-size: 1.25rem;     /* 20px */
+  }
+  .b2 {
+    font-size: 1.125rem;    /* 18px */
+  }
+}

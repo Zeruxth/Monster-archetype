@@ -193,3 +193,42 @@
     opacity: 1;
   }
 }
+
+/* ---- Mobile (≤700px) ----
+   The side-by-side pair (answer card ← → blot) stacks: blot on top (the image
+   being responded to), answer card beneath, dots at the bottom as before.
+   column-REVERSE because the DOM keeps the answer first (desktop order);
+   reversing paints the blot above it without touching the DOM or focus order. */
+@media (max-width: 700px) {
+  .card-screen__row {
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: 24px;
+  }
+  .card-screen__answer {
+    /* In a column, the desktop 475px flex-basis would become HEIGHT — reset
+       it and span the frame's width instead. */
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .card-screen__question {
+    font-size: 28px;
+  }
+  .card-screen__input {
+    font-size: 18px;
+    /* Slightly shallower base so blot + card + dots fit shorter phones. */
+    min-height: 150px;
+  }
+  .card-screen__submit {
+    /* A touch more padding → a ~40px tap target. */
+    padding: 8px;
+  }
+  .card-screen__stage {
+    padding: 0;
+  }
+  .card-screen__blot {
+    /* Fill the stacked column (the 52vw cap was sized for the split row). */
+    width: 100%;
+    max-width: 100%;
+  }
+}

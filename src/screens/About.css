@@ -71,6 +71,17 @@
   }
 }
 
+/* ---- Mobile (≤700px) ----
+   The 34px display paragraph would run ~40 lines (≈3 screens) at phone width —
+   and the frame clips overflow. Step it down to body scale so the whole blurb
+   plus the contact line fit the frame, keeping the bottom-right pin. */
+@media (max-width: 700px) {
+  .about__text {
+    font-size: 18px;
+    line-height: 1.35;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .about__caret {
     display: none;

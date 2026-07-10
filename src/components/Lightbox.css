@@ -110,7 +110,36 @@
   margin-inline: auto;
   max-width: calc(100vw - 112px);
   max-height: calc(100vh - 160px);
+  max-height: calc(100dvh - 160px); /* mobile: track the collapsing address bar (vh = fallback) */
   border-radius: 8px;
+}
+
+/* ---- Mobile (≤700px) ----
+   Tighter chrome so the artwork gets the small screen: the 32px scrim inset and
+   24px panel padding drop to 16/12, and the image's max-size subtracts the
+   smaller chrome (16·2 + 12·2 = 56 horizontally; + header ~38 + 10 gap + slack
+   = 112 vertically — in dvh, so the collapsing address bar can't clip the
+   panel). */
+@media (max-width: 700px) {
+  .lightbox {
+    padding: 16px;
+  }
+  .lightbox__panel {
+    padding: 12px;
+    border-radius: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  .lightbox__title {
+    font-size: 16px;
+  }
+  .lightbox__close {
+    padding: 8px; /* ~37px tap target (matches the page's back button) */
+  }
+  .lightbox__image {
+    max-width: calc(100vw - 56px);
+    max-height: calc(100vh - 112px);
+    max-height: calc(100dvh - 112px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

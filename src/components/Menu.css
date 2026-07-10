@@ -121,3 +121,99 @@
 .menu--dark .menu__link {
   color: var(--color-text-primary);
 }
+
+/* ---- Mobile full-screen menu (≤700px) ----
+   The links hide behind :hover on desktop, but touch has no hover — so on
+   mobile the asterisk becomes a toggle (see Menu.tsx) that opens this
+   full-screen dark menu instead of going home; home moves inside it. */
+.menu__overlay {
+  position: fixed; /* escapes the panels' overflow clipping */
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  background: var(--color-bg-dark);
+  animation: menu-overlay-in 250ms ease;
+}
+@keyframes menu-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The close mark (an X, Figma 574-1534) sits exactly where the in-panel
+   asterisk that opened the menu sits (panel inset --frame-pad + the menu's own
+   24px offset) — same spot, but the asterisk "becomes" an X so the exit
+   affordance is unmistakable. The X's viewBox is slightly wide (27×24.4), so
+   "meet" letterboxes it inside the 32×32 box; the box (position + tap target)
+   is unchanged. */
+.menu__overlay-close {
+  position: absolute;
+  top: calc(var(--frame-pad) + 24px);
+  right: calc(var(--frame-pad) + 24px);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-surface-light);
+  cursor: pointer;
+}
+.menu__overlay-close svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.menu__overlay-close path {
+  fill: currentColor;
+}
+
+/* Big stacked links on the dark ground (always light, whatever the variant of
+   the menu that opened it). Same underline = "you are here" treatment. */
+.menu__overlay-link {
+  border: none;
+  background: transparent;
+  padding: 0 0 8px;
+  border-bottom: 1px solid transparent;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--color-surface-light);
+  cursor: pointer;
+}
+.menu__overlay-link--active {
+  border-bottom-color: currentColor;
+}
+.menu__overlay-link:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 700px) {
+  /* The inline hover-links are replaced by the overlay; the asterisk grows a
+     little as a mark and a tap target. */
+  .menu {
+    height: 32px;
+  }
+  .menu__links {
+    display: none;
+  }
+  .menu__logo {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Resize escape hatch: if the viewport grows past the breakpoint while the
+   overlay is open, drop it (desktop uses the inline hover-links). */
+@media (min-width: 701px) {
+  .menu__overlay {
+    display: none;
+  }
+}

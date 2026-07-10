@@ -11,6 +11,7 @@
      explicit height (rather than flex:1, which would grow with the tall content)
      bounds it; overflow:hidden guards against any sub-pixel spill. */
   height: 100vh;
+  height: 100dvh; /* mobile: track the collapsing address bar (vh = fallback) */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -51,6 +52,12 @@
      it. With this, the centre no longer depends on how much text the info column
      holds; the gallery simply starts just under the fold. */
   min-height: 100%;
+  /* Never let the panel's column flex shrink this row to that min-height floor:
+     inside a scroll container the content must keep its natural height (shrinking
+     would make the sections overflow the row and the gallery overlap them —
+     exactly what happened on mobile, where the stacked children far exceed one
+     panel-height). */
+  flex-shrink: 0;
   display: flex;
   align-items: stretch; /* art column borders span the row height */
 }
@@ -279,4 +286,58 @@
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* ---- Mobile (≤700px) ----
+   The 50/50 info|art split stacks in the Result's mobile order: headline →
+   monster → text sections, with the gallery flowing below. Same technique as
+   Result.css: dissolve the info column so its children join the row's column
+   flow, then `order` slots the art between them. */
+@media (max-width: 700px) {
+  .monster-page__top {
+    flex-direction: column;
+  }
+  .monster-page__info {
+    display: contents;
+  }
+  .monster-page__title {
+    order: 0;
+    font-size: 28px;
+    /* Carries the inset itself now (info's 24px box is dissolved); the tall top
+       band clears the sticky back button pinned at the panel's top-right. */
+    padding: 72px 16px 16px;
+  }
+  .monster-page__art {
+    order: 1;
+    /* In a column the 50% flex-basis would become HEIGHT — reset it. */
+    flex: 0 0 auto;
+    padding: 24px;
+    /* Stacked: only the horizontal rules divide (mirrors the Result's mobile
+       art box); the vertical divider and its corner radii go. */
+    border-left: none;
+    border-radius: 0;
+  }
+  .monster-page__sections {
+    order: 2;
+    padding: 24px 16px;
+    /* The art box's bottom border is the divider now — a border-top here would
+       double it. */
+    border-top: none;
+  }
+  .monster-page__body {
+    font-size: 18px;
+  }
+  .monster-page__back {
+    /* A touch more padding → a ~37px tap target. */
+    padding: 8px;
+  }
+  .monster-page__gallery {
+    /* Two masonry columns (the 296px auto-fit would collapse to one). */
+    columns: 2;
+    column-gap: 16px;
+    padding: 16px;
+  }
+  .monster-page__image-btn {
+    margin: 0 0 16px;
+  }
 }

@@ -109,12 +109,61 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
     preloadGraphics(MONSTER_IDS.map(monsterSrc));
   }, []);
 
+  // Touch has no hover, so the hover-preview (swap text + hero title/blurb)
+  // would never be seen — a tap would navigate blind. In the two-tap flow the
+  // FIRST tap only reveals the item's info and "arms" it; the SECOND tap enters.
+  // Note the synthetic mouseenter a tap fires can't arm — only a click can — so
+  // the first tap always previews.
+  const [armed, setArmed] = useState<HeroKey | null>(null);
+
   const enter = (key: HeroKey) => setHover(key);
   // Freeze the hover while exiting so the fade-out happens from the hovered
   // screen's text, not the default landing.
   const leave = () => {
-    if (!exiting) setHover(null);
+    if (!exiting) {
+      setHover(null);
+      // Touch: tapping away also disarms — the next tap shows the info again
+      // instead of navigating blind.
+      setArmed(null);
+    }
   };
+
+  // Checked at tap time (not mount) so it tracks the live input environment.
+  // Two-tap applies on hover-less devices at any width AND in the mobile layout
+  // (≤700px) even with a mouse — the phone flow is part of that layout, so a
+  // narrow desktop window behaves exactly like the phone (tap מבחן → the hero
+  // text enters and the label swaps; tap again → enter the test).
+  const tapPreviews = (key: HeroKey): boolean => {
+    const twoTap =
+      window.matchMedia('(hover: none)').matches ||
+      window.matchMedia('(max-width: 700px)').matches;
+    if (!twoTap) return false;
+    if (armed === key) return false; // second tap — let the click navigate
+    enter(key);
+    setArmed(key);
+    return true;
+  };
+
+  // The three destinations, shared by the nav buttons (second tap / desktop
+  // click) and the comparison sheet's היכנס button (variant D below).
+  const goTest = () => {
+    // Ensure the test hero text is showing, then begin the exit.
+    if (hover !== 'test') enter('test');
+    onStart();
+  };
+  const goCatalog = () => {
+    // Hand the catalogue the monster currently drawn in the background
+    // (and its on-screen box) so it can fly that creature into its tile.
+    // If none is present, navigate plainly.
+    const id = bgMonster;
+    const svg = document.querySelector('.landing__bg--catalog svg');
+    if (id && svg) {
+      onCatalog?.({ id, rect: svg.getBoundingClientRect() });
+    } else {
+      onCatalog?.();
+    }
+  };
+  const goAbout = () => onAbout?.();
 
   // Keep the default content mounted for a beat after hover so it can fade out
   // before it unmounts (the hover content slides up into the same slot).
@@ -172,9 +221,8 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
           type="button"
           className="landing__nav-item landing__nav-item--right"
           onClick={() => {
-            // Ensure the test hero text is showing, then begin the exit.
-            if (hover !== 'test') enter('test');
-            onStart();
+            if (tapPreviews('test')) return; // touch: first tap = info only
+            goTest();
           }}
           onMouseEnter={() => enter('test')}
           onMouseLeave={leave}
@@ -185,16 +233,8 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
           type="button"
           className="landing__nav-item landing__nav-item--center"
           onClick={() => {
-            // Hand the catalogue the monster currently drawn in the background
-            // (and its on-screen box) so it can fly that creature into its tile.
-            // If none is present, navigate plainly.
-            const id = bgMonster;
-            const svg = document.querySelector('.landing__bg--catalog svg');
-            if (id && svg) {
-              onCatalog?.({ id, rect: svg.getBoundingClientRect() });
-            } else {
-              onCatalog?.();
-            }
+            if (tapPreviews('catalog')) return; // touch: first tap = info only
+            goCatalog();
           }}
           onMouseEnter={() => enter('catalog')}
           onMouseLeave={leave}
@@ -204,7 +244,10 @@ export function Landing({ onStart, onCatalog, onAbout, exiting = false }: Landin
         <button
           type="button"
           className="landing__nav-item landing__nav-item--left"
-          onClick={onAbout}
+          onClick={() => {
+            if (tapPreviews('about')) return; // touch: first tap = info only
+            goAbout();
+          }}
           onMouseEnter={() => enter('about')}
           onMouseLeave={leave}
         >

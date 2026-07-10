@@ -67,3 +67,17 @@
   white-space: nowrap;
   color: inherit;
 }
+
+/* ---- Mobile (≤700px) ----
+   Tiles are ~179px in the two-column grid — tighten the padding and step the
+   label down so the longest names (ימאטה-נו-אורוצ'י) still fit on one line. */
+@media (max-width: 700px) {
+  .monster-card {
+    padding: 12px;
+    gap: 4px;
+    border-radius: 12px;
+  }
+  .monster-card__label {
+    font-size: 15px;
+  }
+}

@@ -47,3 +47,19 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ---- Mobile (≤700px) ----
+   The desktop proportions (24px label, 19px arrow, wide padding) read oversized
+   against the stepped-down mobile type — scale the whole control together. */
+@media (max-width: 700px) {
+  .btn {
+    font-size: 18px;
+    gap: 10px;
+  }
+  .btn--cta {
+    padding: 10px 16px;
+  }
+  .btn .arrow {
+    width: 15px;
+  }
+}

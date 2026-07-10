@@ -37,3 +37,16 @@
 html {
   font-size: 100%;
 }
+
+/* ---- Mobile breakpoint (≤700px) ----
+   The app is desktop-first; each screen adds its phone adaptation under this
+   same `@media (max-width: 700px)` convention (media queries can't read CSS
+   vars, so the 700px is repeated per file — keep them in sync). Tablets
+   (>700px, e.g. iPad) keep the desktop layout, whose fluid flex still fits. */
+@media (max-width: 700px) {
+  :root {
+    /* Figma's 48px frame would be a quarter of a phone's width — tighten it.
+       Every screen pads with this token, so the whole app reflows at once. */
+    --frame-pad: 16px;
+  }
+}

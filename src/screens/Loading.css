@@ -30,3 +30,15 @@
   position: absolute;
   inset: 0;
 }
+
+/* ---- Mobile (≤700px) ----
+   The pill's nowrap 48px line would overflow a ~350px frame; step it down and
+   tighten the chip's padding to match. */
+@media (max-width: 700px) {
+  .loading__pill {
+    padding: 16px;
+  }
+  .loading__text {
+    font-size: 28px;
+  }
+}

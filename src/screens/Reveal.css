@@ -77,3 +77,18 @@
     opacity: 0;
   }
 }
+
+/* ---- Mobile (≤700px) ----
+   The 520px card becomes the frame's full width; the nowrap title and the body
+   step down so the emotion copy breaks into clean lines. */
+@media (max-width: 700px) {
+  .reveal__card {
+    width: 100%;
+  }
+  .reveal__title {
+    font-size: 32px;
+  }
+  .reveal__body {
+    font-size: 18px;
+  }
+}

@@ -105,11 +105,8 @@
   align-items: flex-end;
   gap: 16px;
 }
-/* The "discover more" link sits at the left edge of the column (Figma 359-951),
-   opposite the right-hugging RTL text above it. */
-.result__why .btn--link {
-  align-self: flex-start;
-}
+/* The "discover more" link joins the column's right edge (align-items above),
+   flush with where the RTL text starts. */
 .result__why-text {
   margin: 0;
   width: 100%;
@@ -316,5 +313,63 @@
   to {
     stroke: #1a1a1a;
     stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Mobile (≤700px) ----
+   The 50/50 text|art split stacks: text first (DOM order — monster-first would
+   collide with the absolute menu), monster beneath. The why-text is AI-generated
+   and variable-length, so the panel scrolls instead of clipping. */
+@media (max-width: 700px) {
+  .result__panel {
+    /* Desktop clips to the rounded corners; on mobile the stacked content can
+       exceed the viewport, so scroll it (corners still clip via border-radius). */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .result__row {
+    flex-direction: column;
+    /* Let the stacked content push the row taller than the panel (desktop's
+       min-height: 0 would clamp it and clip instead of scroll). */
+    min-height: auto;
+  }
+  /* Dissolve the text column so its children become the row's own flex items —
+     then `order` interleaves the art between them: headline → monster → why.
+     (The art box's own top/bottom rules frame the monster on both sides.) */
+  .result__text {
+    display: contents;
+  }
+  .result__title-wrap {
+    order: 0;
+    /* Carries the menu clearance (panel's absolute menu at top: 24) now that
+       the text column box is dissolved. */
+    padding: 72px 16px 16px;
+  }
+  .result__art {
+    order: 1;
+    /* In a column the 50% flex-basis would become HEIGHT — reset it. */
+    flex: 0 0 auto;
+    padding: 24px;
+  }
+  .result__section {
+    order: 2;
+    padding: 24px 16px 32px;
+  }
+  .result__title {
+    font-size: 28px;
+    /* Names run long ("ימאטה-נו-אורוצ'י / Yamata no Orochi") — let the bilingual
+       pair break at the slash instead of overflowing the narrow column. */
+    white-space: normal;
+    line-height: 1.15;
+  }
+  .result__why-text {
+    font-size: 18px;
+  }
+  /* No columns to divide in a stack — and the title↕section divider would sit
+     flush against the art box's bottom rule (a doubled line); the art's own
+     rules take over as the separators. */
+  .result__rule--v,
+  .result__rule--section {
+    display: none;
   }
 }

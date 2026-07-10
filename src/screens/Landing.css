@@ -385,3 +385,98 @@
     animation: none;
   }
 }
+
+/* ---- Mobile (≤700px) ----
+   The desktop landing is a poster: three nav items strung across the middle,
+   a 128px title. On a phone the nav restacks as a centred COLUMN of touch
+   targets, the title steps down to fit, and the background monster shrinks
+   into the narrow frame. Hover-only flourishes (the blurb, the label swap,
+   the fade-the-others) don't exist on touch — a tap navigates outright — so
+   the layout stops reserving room for them. */
+@media (max-width: 700px) {
+  /* Background monster loop: cap it well inside the phone screen (48dvh keeps
+     it under half the height); side clamps track the 16px frame pad. */
+  .landing__bg--catalog {
+    height: min(48dvh, 420px);
+    width: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+  }
+
+  /* Nav: the pinned-to-edges row becomes a centred vertical stack. The 16px
+     hit-area padding stays, so each target is a comfortable ~54px tall. */
+  .landing__nav {
+    height: auto;
+    font-size: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  .landing__nav-item {
+    position: static;
+    top: auto;
+  }
+  /* Stacked, the centre item's -50% self-centring offset must not apply. */
+  .landing__nav-item--center {
+    transform: none;
+  }
+  /* Touch has no true hover; don't let a sticky :hover fade the other items. */
+  .landing__nav:hover .landing__nav-item:not(:hover) {
+    opacity: 1;
+  }
+  /* Intro: the slide-from-edge keyframes assume the desktop pinning (the
+     centre one even carries a -50% X offset), so stacked items just fade in
+     on the same 1s-delay beat. */
+  .landing--intro .landing__nav-item--right,
+  .landing--intro .landing__nav-item--center,
+  .landing--intro .landing__nav-item--left {
+    animation: landing-fade 1000ms ease 1000ms backwards;
+  }
+
+  /* Bottom block: the desktop's two-corner row (blurb left, title right)
+     becomes a COLUMN — the hero title on top, the blurb typing in beneath it
+     when an item is armed. Anchored to the page bottom, so the title simply
+     rises to make room; at rest the empty blurb slot adds nothing and the
+     poster is unchanged. */
+  .landing__bottom {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+  }
+  .landing__slot--right {
+    order: 0; /* title first (the slots' DOM order is blurb → title) */
+    min-height: calc(56px * 1.2 * 2);
+  }
+  .landing__slot--left {
+    display: flex;
+    order: 1;
+    width: 100%; /* drop the desktop's reserved 315px column */
+    flex-shrink: 1;
+    min-height: 0;
+  }
+  .landing__title {
+    font-size: 56px;
+  }
+  .landing__blurb {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  /* Brand mark: moves from the desktop's bottom-left corner to the TOP-RIGHT —
+     the same spot (and size) the Menu's asterisk holds on every other mobile
+     screen, its right edge on the same --frame-pad line the title and nav text
+     align to. Decorative here as on desktop (pointer-events: none stands). */
+  .landing__logo {
+    left: auto;
+    bottom: auto;
+    top: var(--frame-pad);
+    right: var(--frame-pad);
+    width: 32px;
+    height: 32px;
+  }
+  /* Top-right has no competing content on mobile (the blurb that claims the
+     desktop's bottom-left corner never shows here) — stay put during preview. */
+  .landing--hover .landing__logo {
+    opacity: 1;
+  }
+}
