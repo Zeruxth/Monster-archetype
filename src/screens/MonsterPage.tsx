@@ -115,6 +115,19 @@ export function MonsterPage({
       />
 
       <div className="monster-page__panel panel-scroll" ref={panelRef}>
+        {/* Zero-height sticky strip: keeps the back arrow pinned to the panel's
+            top-right as the content scrolls beneath it. */}
+        <div className="monster-page__backbar">
+          <button
+            type="button"
+            className="monster-page__back arrow-host"
+            onClick={onBack}
+            aria-label="חזרה למגדיר"
+          >
+            <Arrow direction="right" />
+          </button>
+        </div>
+
         <div className="monster-page__top">
           <div className="monster-page__info">
             <h1 className="monster-page__title" dir="rtl">
@@ -179,14 +192,6 @@ export function MonsterPage({
           </div>
 
           <div className="monster-page__art">
-            <button
-              type="button"
-              className="monster-page__back arrow-host"
-              onClick={onBack}
-              aria-label="חזרה למגדיר"
-            >
-              <Arrow direction="right" />
-            </button>
             {/* Mirror the Result's art choice so the "discover more" hero-morph is
                 a true identity: the Result reveals the finished SILHOUETTE
                 (MonsterSolid) and drains it to line art, so this page must show that
