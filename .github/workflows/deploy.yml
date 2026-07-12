@@ -24,7 +24,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 24 matches the dev machine (Node 24 / npm 11): same npm authors and
+          # validates the lockfile, and svg-path-properties needs node >=22.
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run build
