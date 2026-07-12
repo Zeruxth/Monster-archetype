@@ -146,18 +146,26 @@ const CIRCLE_RING =
 
 /** Stage 4 — one column per dragon, structured instead of one scaled picture:
     the art frame keeps its dragon's aspect and scales with the COLUMN width,
-    while the [0N] tag and the caption are real HTML at fixed sizes. `align` +
-    `frame` margins recreate the Figma scatter (offsets as % of the column, so
-    the composition holds at any width); `tagStyle` places the tag against the
-    art frame per the design. LTR order = the design's left→right scatter. */
+    while the caption is real HTML (the [0N] marks live only in the caption
+    row — the design's frame-riding tags were dropped as doubled info). All
+    four dragons hang from the SAME top line (revised from the Figma stagger,
+    by request) — every slot pins `align: 'start'` with no frame margins; the
+    knobs stay so a scatter can come back per-slot. LTR order = the design's
+    layout. */
 interface SeminarSlot {
   art: AboutArt;
   /** Letterbox anchor for short viewports — matches the column's alignment. */
   pin: string;
   align: 'start' | 'end';
   frame?: CSSProperties;
-  tag: string;
-  tagStyle: CSSProperties;
+  /** The drawing's visual MASS box in art units (getBBox of the painted
+      paths, x-profiled to exclude thin appendages). Used as the viewBox and
+      the frame aspect, so the frame hugs the drawn body with none of the
+      export canvas's padding: frames top-align at the ink, columns (sized to
+      these widths in About.css) put ONE even gap between the masses. Thin
+      overhangs simply spill into the gap (overflow is visible): [02]'s claw
+      arm (x 290→334) deliberately reaches toward [01]. */
+  win: { x: number; y: number; w: number; h: number };
   mark: string;
   name: string;
 }
@@ -167,37 +175,31 @@ const SEMINAR: SeminarSlot[] = [
     art: dragons[3], // 290×465 — the tall Quetzalcoatl, hangs from the top
     pin: 'xMidYMin meet',
     align: 'start',
-    tag: '[04]',
-    tagStyle: { left: '43%', top: '4%' },
+    win: { x: 34.6, y: 37.7, w: 236.5, h: 413.2 },
     mark: '(04)',
     name: 'קצלקואטל// מיתולוגיה אצטקית // המאה ה-15',
   },
   {
-    art: dragons[2], // 357×331 — Apophis, sits low
-    pin: 'xMidYMax meet',
-    align: 'end',
-    frame: { marginBottom: '7.3%' },
-    tag: '[03]',
-    tagStyle: { left: '71.5%', top: 0 },
+    art: dragons[2], // 357×331 — Apophis
+    pin: 'xMidYMin meet',
+    align: 'start',
+    win: { x: 1, y: 1, w: 354.6, h: 328.7 },
     mark: '[03]',
     name: 'אפופיס// מיתולוגיה מצרית// 1290-1292 לפנה”ס',
   },
   {
-    art: dragons[1], // 334×346 — the Japanese dragon, near the top
+    art: dragons[1], // 334×346 — the Japanese dragon; claw arm overflows right
     pin: 'xMidYMin meet',
     align: 'start',
-    frame: { marginTop: '6.3%' },
-    tag: '[02]',
-    tagStyle: { right: 0, top: '3.8%' },
+    win: { x: 1, y: 1, w: 289, h: 343.4 },
     mark: '[02]',
     name: 'דרקון ללא שם// מיתולוגיה יפנית // המאה ה-18',
   },
   {
-    art: dragons[0], // 498×226 — the wide Python, rests on the baseline
-    pin: 'xMidYMax meet',
-    align: 'end',
-    tag: '[01]',
-    tagStyle: { right: 0, top: 0 },
+    art: dragons[0], // 498×226 — the wide Python
+    pin: 'xMidYMin meet',
+    align: 'start',
+    win: { x: 8, y: 8.3, w: 484.7, h: 214.4 },
     mark: '[01]',
     name: 'פייתון// מיתולוגיה יוונית // המאה השלישית לפנה”ס',
   },
@@ -264,30 +266,27 @@ const ART: ReactNode[] = [
   <div className="about__seminar" data-stage={3} key="seminar">
     {SEMINAR.map((d) => (
       <div
-        key={d.tag}
+        key={d.mark}
         className="about__seminar-cell"
         style={{ justifyContent: d.align === 'end' ? 'flex-end' : 'flex-start' }}
       >
         <div
           className="about__seminar-frame"
-          style={{ aspectRatio: `${d.art.w} / ${d.art.h}`, ...d.frame }}
+          style={{ aspectRatio: `${d.win.w} / ${d.win.h}`, ...d.frame }}
         >
           <svg
-            viewBox={`0 0 ${d.art.w} ${d.art.h}`}
+            viewBox={`${d.win.x} ${d.win.y} ${d.win.w} ${d.win.h}`}
             preserveAspectRatio={d.pin}
             aria-hidden="true"
           >
             <ArtPaths art={d.art} />
             <Rings art={d.art} />
           </svg>
-          <span className="about__seminar-tag" style={d.tagStyle}>
-            {d.tag}
-          </span>
         </div>
       </div>
     ))}
     {SEMINAR.map((d) => (
-      <p key={d.tag} className="about__seminar-caption" dir="rtl">
+      <p key={d.mark} className="about__seminar-caption" dir="rtl">
         <span className="about__seminar-mark" dir="ltr">
           {d.mark}
         </span>

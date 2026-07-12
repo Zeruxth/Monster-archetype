@@ -92,9 +92,15 @@
   min-height: 0;
   width: 100%;
   display: grid;
-  grid-template-columns: 290fr 357fr 334fr 498fr;
+  /* Column tracks follow each drawing's MASS width (the SeminarSlot `win`
+     boxes in About.tsx — ink bounds, not the export canvases), so every art
+     fills its column edge-to-edge and the gap below is the REAL distance
+     between the drawn bodies. The gap is proportional (8% of the row), which
+     keeps the rhythm even at any width and holds the drawings ~15% smaller
+     than the canvas-track layout that maximized them. */
+  grid-template-columns: 236fr 355fr 289fr 485fr;
   grid-template-rows: minmax(0, 1fr) auto;
-  column-gap: 16px;
+  column-gap: 8%;
   row-gap: 32px;
 }
 .about__seminar-cell {
@@ -104,7 +110,7 @@
 }
 /* The art frame holds its dragon's aspect at full column width; on short
    viewports it shrinks (min-height 0) and the svg letterboxes the drawing
-   toward its anchored edge. Tags ride this frame, not the column. */
+   toward its anchored edge. */
 .about__seminar-frame {
   position: relative;
   width: 100%;
@@ -118,18 +124,16 @@
   height: 100%;
   overflow: visible;
 }
-.about__seminar-tag {
-  position: absolute;
-  font-family: 'The Basics', 'Assistant', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1;
-}
+/* Caption size grows with the viewport (the design's 10px reads fine at the
+   1344 design width but turns miniature next to art that has scaled up on
+   wide monitors); the vw slope passes ≈ the design size at 1344 and the
+   floor keeps it readable on narrow windows. */
 .about__seminar-caption {
   margin: 0;
   font-family: 'The Basics', 'Assistant', sans-serif;
   font-weight: 400;
   font-size: 10px;
+  font-size: clamp(11px, 0.75vw, 15px);
   line-height: 1.2;
   text-align: right;
 }
