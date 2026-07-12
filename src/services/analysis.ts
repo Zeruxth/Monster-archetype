@@ -12,10 +12,9 @@ const ENDPOINT = 'https://monster-archetype-api.monsterarchetype.workers.dev';
 // Wire shapes returned by the Worker (the raw model JSON for each call).
 // ---------------------------------------------------------------------------
 interface EmotionResponse {
+  // Call 1 was trimmed to this single field (the only one the app ever read);
+  // the Hebrew mirror fields were dropped Worker-side to cut latency.
   emotion: string;
-  emotion_he?: string;
-  confidence?: number;
-  reasoning?: string;
 }
 interface MonsterResponse {
   monster: string;
@@ -150,11 +149,22 @@ function vritraFallback(): AnalysisResult {
   };
 }
 
+// Fixed exhibition notice appended after the personalized text. Deliberately
+// NOT part of the model prompt: appending in code guarantees the exact wording
+// every time, costs zero extra generation time, and keeps it off the Vritra
+// error screen (where nothing was identified and there is no postcard to take).
+const POSTCARD_LINE =
+  'המפלצת והרגש שזוהו עבורך בתהליך מופיעים גם בגלויה מודפסת, שאפשר לקחת בסיום הביקור.';
+
 // One full pass: Call 1 (emotion) then Call 2 (monster + explanation).
 async function runOnce(answers: string[]): Promise<AnalysisResult> {
   const emotion = await detectEmotion(answers);
   const { monster, explanation } = await matchMonsterCall(emotion, answers);
-  return { emotion, monster: { ...monster, why: explanation }, isFallback: false };
+  return {
+    emotion,
+    monster: { ...monster, why: `${explanation} ${POSTCARD_LINE}` },
+    isFallback: false,
+  };
 }
 
 /**

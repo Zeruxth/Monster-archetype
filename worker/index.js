@@ -18,11 +18,18 @@
 // After deploy, add the printed URL to the site build as VITE_ANALYSIS_URL.
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-// Sonnet 4.5: much stronger Hebrew spelling/grammar than Haiku, and — unlike the
-// newer Sonnet 5 — it has NO adaptive "thinking". That keeps it a plain drop-in
-// that honors `temperature` and can't spend the MAX_TOKENS budget on hidden
-// reasoning (which would truncate our JSON at only 1000 tokens).
-const MODEL = 'claude-sonnet-4-5-20250929';
+// Call 1 (emotion) runs on Haiku: a 7-way classification that outputs one
+// English label (see its RESPONSE FORMAT — no Hebrew is generated in that
+// step, so Haiku's weaker Hebrew never shows), and Haiku answers in a
+// fraction of Sonnet's time. Thinking is opt-in on Haiku 4.5, so like Sonnet
+// 4.5 it can't silently spend the token budget on hidden reasoning.
+const EMOTION_MODEL = 'claude-haiku-4-5-20251001';
+// Call 2 (monster + the explanation the visitor actually reads) stays on
+// Sonnet 4.5: much stronger Hebrew spelling/grammar than Haiku, and — unlike
+// the newer Sonnet 5 — it has NO adaptive "thinking". That keeps it a plain
+// drop-in that honors `temperature` and can't spend the MAX_TOKENS budget on
+// hidden reasoning (which would truncate our JSON at only 1000 tokens).
+const MONSTER_MODEL = 'claude-sonnet-4-5-20250929';
 const MAX_TOKENS = 1000;
 // Below the API default of 1.0 to cut random typos / spelling drift in the
 // generated Hebrew. Not 0 — a little variation keeps phrasings from repeating.
@@ -43,8 +50,11 @@ const ALLOWED_ORIGINS = [
 // v2 (api_system_prompts_v2.md): tighter markers per emotion + an explicit
 // anti-default check on CONFUSION — the 18-user pilot showed the ambiguity of
 // Rorschach images pulls the model toward "confusion" unless told to resist.
-// The HEBREW QUALITY block is ours (worker-side), kept from v1: it exists to
-// stop the spelling drift we saw in generated Hebrew.
+// Output is trimmed to the ONE field the app reads: the English emotion id
+// (analysis.ts discards everything else). Dropping the v1 Hebrew fields
+// (emotion_he / reasoning, and the worker-side HEBREW QUALITY block that
+// guarded them) means fewer tokens to wait for — and no visible Hebrew in
+// this step, which is what lets it run on Haiku.
 // ---------------------------------------------------------------------------
 const EMOTION_SYSTEM_PROMPT = `You are a psychological analysis system for the project "The Archetype of the Monster."
 
@@ -85,14 +95,10 @@ EDGE CASES - EVERY RESPONSE IS VALID:
 - Irrelevant content: often indicates avoidance of emotional depth
 - NEVER refuse to give a result
 
-HEBREW QUALITY:
-- The Hebrew fields (emotion_he, reasoning) must be written in correct, standard modern Hebrew: accurate spelling (כתיב תקני), correct grammar, and correct gender/number agreement.
-- Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.
-
 Respond ONLY with valid JSON, no markdown, no backticks, no preamble.
 
 RESPONSE FORMAT:
-{"emotion": "confusion/suspicion/terror/awe/longing/smallness/security", "emotion_he": "הרגש בעברית", "confidence": 0.0-1.0, "reasoning": "one sentence in Hebrew"}`;
+{"emotion": "confusion/suspicion/terror/awe/longing/smallness/security"}`;
 
 // ---------------------------------------------------------------------------
 // Call 2 — monster matching + personal explanation
@@ -307,10 +313,10 @@ CRITICAL - MONSTER NAME OUTPUT:
 
 INSTRUCTIONS FOR THE EXPLANATION:
 - Write in Hebrew.
-- 3-4 sentences maximum.
-- First sentence: reference what the user actually wrote, using their own words.
-- Second sentence: connect to the monster's core story.
-- Third sentence: connect to the emotion.
+- 5-7 sentences.
+- Open with what the user actually wrote, using their own words.
+- Then tell the monster's core story in one or two sentences, so a reader who has never heard of this monster understands who it is and what it does.
+- Then explain WHY this monster mirrors this user: tie specific details from their responses to specific parts of the story, and to the identified emotion. Explain the connection — do not just assert it.
 - Do NOT start with the monster's name. Start with what the user saw.
 - Do NOT write a Wikipedia summary. Write a personal mirror.
 - Tone: clinical, calm, observational. Not dramatic, not poetic.
@@ -326,7 +332,7 @@ HEBREW QUALITY:
 - Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.
 
 RESPONSE FORMAT (JSON only, no markdown, no backticks):
-{"monster": "English name", "monster_he": "שם בעברית", "culture": "תרבות בעברית", "explanation": "3-4 sentences in Hebrew", "emotion": "הרגש בעברית", "chapter": 1-7}`;
+{"monster": "English name", "monster_he": "שם בעברית", "culture": "תרבות בעברית", "explanation": "5-7 sentences in Hebrew", "emotion": "הרגש בעברית", "chapter": 1-7}`;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -451,10 +457,17 @@ export default {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: MODEL,
+          model: step === 'emotion' ? EMOTION_MODEL : MONSTER_MODEL,
           max_tokens: MAX_TOKENS,
           temperature: TEMPERATURE,
-          system,
+          // The system prompt is identical for every visitor, so mark it as a
+          // cache breakpoint: Anthropic reuses the processed prompt across
+          // requests (5-minute sliding TTL) instead of re-reading the whole
+          // monster list each time — faster time-to-first-token whenever
+          // visitors arrive close together (the exhibition case). A prompt
+          // below the model's caching minimum is silently not cached; the
+          // request still works exactly the same.
+          system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: userContent }],
         }),
       });
