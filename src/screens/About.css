@@ -1,89 +1,327 @@
-/* ---- על הפרוייקט (Figma 382-1635) ----
-   Dark page: the shared Menu pinned top-right, the project blurb pinned to the
-   bottom and right-aligned. The text types itself in (no scale-open). */
+/* ---- על הפרוייקט (Figma 577-727 entry → 558-610 story) ----
+   A scroll-scrubbed story. The `.about` root is a runway (100vh of scroll per
+   stage); `.about__sticky` rides it as the visible full-viewport frame. Each
+   stage is one absolutely-stacked layer — shape canvas above a label+body
+   block, bottom-pinned like the Figma sections — crossfaded by scroll
+   position (inline opacity from About.tsx). The step-3 morph engine overlays
+   this frame; the hidden .about__ring paths in every canvas are its
+   geometry. */
 .about {
-  /* LTR layout frame (menu right, blurb bottom); the text run itself is RTL. */
+  /* LTR layout frame (menu right, arrow left); text runs are RTL. */
   direction: ltr;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* menu pinned right */
-  justify-content: space-between; /* menu top, blurb bottom */
-  padding: var(--frame-pad);
+  height: calc(var(--about-stages) * 100vh);
+  height: calc(var(--about-stages) * 100dvh); /* mobile address bar (vh = fallback) */
   background: var(--color-bg-dark);
   color: var(--color-surface-light);
+}
+
+.about__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
-/* ---- Blurb + contact: one full-width column pinned bottom-right (Figma 558-613)
-   ----
-   The blurb and its closing contact line share one right-aligned text column that
-   spans the full frame width (Figma w-1344 ≈ 100%). They read as two stacked
-   paragraphs at the same 34px size; position:relative anchors the typed overlay
-   over the hidden sizing twin. */
-.about__body {
-  position: relative;
-  width: 100%;
+.about__menu {
+  position: absolute;
+  top: var(--frame-pad);
+  right: var(--frame-pad);
+  z-index: 10;
 }
 
-.about__text {
-  margin: 0;
+/* ---- Stage layers ----
+   One full-viewport composition per stage, pinned to the bottom pad (the
+   Figma sections bottom-align their group: art, 64px gap, text). Stacked
+   siblings; the scroll handler drives opacity/visibility inline. */
+.about__layer {
+  position: absolute;
+  inset: 0;
+  /* Top inset clears the menu row (pad + 24px logo + breathing room). */
+  padding: calc(var(--frame-pad) + 72px) var(--frame-pad) var(--frame-pad);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 64px;
+}
+
+/* The stage canvas: full content width at the design's 1344-based aspect
+   (inline aspect-ratio per stage). On viewports too short for art + text the
+   flex column shrinks the BOX and the svg letterboxes its drawing inside it
+   (per-stage preserveAspectRatio keeps right-flush art on the right edge,
+   full-width art centred — both bottom-anchored against the text below). */
+.about__canvas {
   width: 100%;
+  height: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: visible; /* let edge strokes (capsule, star tips) breathe */
+}
+
+/* ONE stroke weight for the whole story: every line renders at exactly 1px
+   screen, at every viewport. Two mechanisms: non-scaling-stroke stops the
+   letterbox scale from thinning/fattening lines per shape (each seminar
+   dragon letterboxes at its own scale, which read as uneven weights), and
+   the 1px here overrides the mixed export weights (1 / 1.5 / 2 design px).
+   The capsule border and the morph overlay hold the same 1px. */
+.about__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+/* Filled unions (the star's rays, the polygon band, dragon-4 details):
+   evenodd keeps the band's middle knocked out. */
+.about__fill {
+  fill: currentColor;
+}
+/* Morph geometry only — sampled by the step-3 engine, never painted. */
+.about__ring {
+  visibility: hidden;
+}
+
+/* ---- Stage 4, structured (not one scaled picture) ----
+   A 4-column grid that ALWAYS spans the content width — column tracks follow
+   the Figma dragon widths, row 1 is the art scatter, row 2 the caption line.
+   Art scales with its column (and compresses when the viewport is short);
+   tags and captions are real HTML at fixed sizes, so they never shrink with
+   the artwork. */
+.about__seminar {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 290fr 357fr 334fr 498fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 32px;
+}
+.about__seminar-cell {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* The art frame holds its dragon's aspect at full column width; on short
+   viewports it shrinks (min-height 0) and the svg letterboxes the drawing
+   toward its anchored edge. Tags ride this frame, not the column. */
+.about__seminar-frame {
+  position: relative;
+  width: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.about__seminar-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.about__seminar-tag {
+  position: absolute;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+}
+.about__seminar-caption {
+  margin: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: right;
+}
+/* The (0N) marker line floats above the name line, per the design. */
+.about__seminar-mark {
+  display: block;
+  margin-bottom: 14px;
+}
+
+/* ---- Stage 5, structured: a real CSS stadium capsule ----
+   Full content width with a constant 1px border; the natural shape is the
+   design's 1344×513.57, and on short viewports it FLATTENS (min-height 0)
+   instead of shrinking toward the centre. Inside, one column per blot
+   (tracks follow the blot bbox widths; 6% padding ≈ the design's 80px inset
+   at full size), so the blots stay spread across the width and compress in
+   place. */
+.about__capsule {
+  flex: 0 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1344 / 513.57;
+  padding: 6%;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+  display: grid;
+  grid-template-columns: 290fr 282fr 266fr 251fr;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 2.2%;
+}
+.about__capsule svg {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* ---- Stage text: label over body, full-width and right-aligned (RTL) ---- */
+.about__text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about__label {
+  margin: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.about__body {
+  margin: 0;
   font-family: 'The Basics', 'Assistant', sans-serif;
   font-weight: 400;
   font-size: 34px;
   line-height: 1.2;
   text-align: right;
-  color: var(--color-surface-light);
+  white-space: pre-line; /* the thanks stage separates its contact line */
   word-break: break-word;
-  white-space: pre-line; /* honour the \n between blurb and contact line */
 }
 
-/* Hidden twin reserves the final box; the typed copy overlays it exactly so the
-   paragraph fills top-to-bottom without reflowing. */
-.about__text--ghost {
-  visibility: hidden;
-}
-.about__text--typed {
+/* ---- Morph overlay: the in-between shape during stage transitions ----
+   Full sticky-frame svg with NO viewBox — its user units are CSS pixels, so
+   the flubber paths (sampled in screen space) land exactly on the settled
+   art. Sits above the stage layers (DOM order), below menu/arrow (z-10). */
+.about__morph {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.about__morph path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1; /* the story's single stroke weight (= .about__line) */
 }
 
-/* Blinking caret trailing the typed text (a thin light bar). */
-.about__caret {
-  display: inline-block;
-  width: 2px;
-  height: 0.8em;
-  margin-inline-start: 2px;
-  vertical-align: baseline;
-  background: var(--color-surface-light);
-  transform: translateY(0.08em);
-  animation: about-caret-blink 1s steps(1) infinite;
+/* ---- Down-arrow: advance to the next stage ----
+   Bottom-left, in the bottom pad band (the Figma entry parks it just below
+   the text block's bottom line). Bare glyph button; hover uses the system
+   arrow's corner-rounding morph via .arrow-host. */
+.about__advance {
+  position: absolute;
+  left: calc(var(--frame-pad) - 8px);
+  bottom: 13px;
+  z-index: 10;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-surface-light);
+  cursor: var(--cursor-hover), pointer;
+  transition: opacity var(--t-ui);
 }
-@keyframes about-caret-blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  50.01%,
-  100% {
-    opacity: 0;
+.about__advance-arrow {
+  width: 26px;
+  transform: rotate(-90deg); /* left arrow → down */
+}
+
+/* ---- Narrow desktop / portrait tablets (≤900px) ----
+   The design's wide stadium leaves the blots tiny once the content width
+   drops: they're height-driven inside their columns, and the 1344/513.57
+   ratio starves that height. Deepen the capsule to where the COLUMN width
+   becomes the constraint instead — each blot maxes out its slot. */
+@media (max-width: 900px) {
+  .about__capsule {
+    aspect-ratio: 1344 / 645;
+    /* Deeper caps curve further into the end columns and the square blot's
+       corners graze the arc — more inset, and a near-stadium 120px corner
+       whose short straight runs clear the corner cells. */
+    padding: 7% 6.5%;
+    border-radius: 120px;
   }
 }
 
 /* ---- Mobile (≤700px) ----
-   The 34px display paragraph would run ~40 lines (≈3 screens) at phone width —
-   and the frame clips overflow. Step it down to body scale so the whole blurb
-   plus the contact line fit the frame, keeping the bottom-right pin. */
+   Same story in the phone frame: bottom-pinned art-over-text stages with the
+   app's mobile type scale (frame pad drops to 16px via the shared token).
+   The right-flush stage canvases (circle/star/polygon/logo) live in a
+   1344-wide design space that would shrink the shapes to thumbnails at 360px,
+   so they OVERSCALE: 250% width, right-anchored — the design's empty left
+   field hangs off-screen (the sticky frame clips it) and the shape holds a
+   readable size. The seminar re-stacks 2×2 with each caption row under its
+   own art row; the capsule re-frames as a tall 2×2 pill to match. Morph
+   geometry follows automatically (screen-space sampling + rebuild on
+   resize). */
 @media (max-width: 700px) {
-  .about__text {
-    font-size: 18px;
-    line-height: 1.35;
+  .about__layer {
+    /* The menu is the 32px logo on phones — clear it + breathing room. */
+    padding-top: calc(var(--frame-pad) + 48px);
+    /* Full-width text would run under the bottom-left down-arrow (its band
+       is a free corner on desktop) — reserve the arrow's row. */
+    padding-bottom: calc(var(--frame-pad) + 44px);
+    gap: 24px;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .about__caret {
-    display: none;
+  .about__canvas {
+    width: 250%; /* star ≈ ⅔ of the frame width; left field clipped */
+    align-self: flex-end;
+  }
+
+  /* Seminar 2×2: DOM order is 4 frames then 4 captions, so explicit areas
+     re-slot caption N directly under frame N (pairs 1+2 / 3+4). */
+  .about__seminar {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 12px;
+  }
+  .about__seminar-cell:nth-child(1) { grid-area: 1 / 1; }
+  .about__seminar-cell:nth-child(2) { grid-area: 1 / 2; }
+  .about__seminar-cell:nth-child(3) { grid-area: 3 / 1; }
+  .about__seminar-cell:nth-child(4) { grid-area: 3 / 2; }
+  .about__seminar-caption:nth-child(5) { grid-area: 2 / 1; }
+  .about__seminar-caption:nth-child(6) { grid-area: 2 / 2; }
+  .about__seminar-caption:nth-child(7) { grid-area: 4 / 1; }
+  .about__seminar-caption:nth-child(8) { grid-area: 4 / 2; }
+  .about__seminar-mark {
+    margin-bottom: 6px;
+  }
+
+  /* Capsule: four-in-a-row leaves phone-width blots tiny — re-frame as a
+     tall 2×2 pill (echoing the seminar grid above it; the dragon→blot morphs
+     fly straight down their columns). The natural 0.6 ratio is the 2×2 blot
+     geometry at full column width; on real phone heights the flex column
+     letterboxes it into a rounder pill, which still reads right.
+     Full-stadium end caps would sweep through all four corner cells (the
+     square blot's corners collide with the arc), so the tall pill uses a
+     100px corner instead — still capsule-tongued, but with straight runs
+     past every blot corner — plus a 10% inset. */
+  .about__capsule {
+    aspect-ratio: 0.6;
+    padding: 10%;
+    border-radius: 100px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 12px;
+  }
+
+  /* Type steps down to the app's phone scale (cf. MonsterPage body 18px). */
+  .about__text {
+    gap: 8px;
+  }
+  .about__label {
+    font-size: 14px;
+  }
+  .about__body {
+    font-size: 18px;
   }
 }

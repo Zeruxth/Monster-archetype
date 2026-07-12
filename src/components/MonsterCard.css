@@ -4,7 +4,7 @@
   /* button reset */
   appearance: none;
   font: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   /* layout — the tile is a square; the art flexes to fill the space above the
      name, so the monster scales to fit (and grows with the card on wider
      screens). */
@@ -15,6 +15,9 @@
   gap: 8px;
   padding: 24px;
   aspect-ratio: 1;
+  /* Size container so the label below can scale itself off THIS tile's width
+     (cqw) — the grid resizes tiles continuously, so no fixed font fits all. */
+  container-type: inline-size;
   /* Frame: a 1px line at half opacity — it reads as a finer, lighter hairline
      than the solid 1px monster line-art it holds, giving the "half-weight" frame
      via lightness instead of width. (A true sub-pixel 0.5px border can't render
@@ -62,22 +65,29 @@
   font-family: 'Lilith', 'Frank Ruhl Libre', serif;
   /* Medium weight (Lilith-Medium, see styles/fonts.css) for the tile title. */
   font-weight: 500;
+  /* Fit-the-longest-name sizing. The widest caption (ימאטה-נו-אורוצ'י /
+     Yamata no Orochi) measures 16.7× the font-size in this font; 5.75cqw
+     (= tile content-width ÷ 17.4, a little slack) is the largest size that
+     keeps it on one line, capped at the design's 24px on wide tiles and
+     floored at a readable 13px on narrow ones. Below the floor the caption
+     may WRAP (no more nowrap — that's what pushed it out of the frame): in
+     practice only Yamata breaks, at its " / ", into two centred lines on
+     phone-width tiles. The plain 24px above is the no-container-queries
+     fallback (old browsers then simply wrap sooner). */
   font-size: 24px;
+  font-size: clamp(13px, 5.75cqw, 24px);
   line-height: 1.1;
-  white-space: nowrap;
+  text-align: center;
   color: inherit;
 }
 
 /* ---- Mobile (≤700px) ----
-   Tiles are ~179px in the two-column grid — tighten the padding and step the
-   label down so the longest names (ימאטה-נו-אורוצ'י) still fit on one line. */
+   Tiles are ~190px in the two-column grid — tighten the chrome. The label
+   needs no override: its clamp() above already bottoms out at 13px here. */
 @media (max-width: 700px) {
   .monster-card {
     padding: 12px;
     gap: 4px;
     border-radius: 12px;
-  }
-  .monster-card__label {
-    font-size: 15px;
   }
 }

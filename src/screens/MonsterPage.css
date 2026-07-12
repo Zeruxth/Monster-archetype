@@ -140,7 +140,7 @@
   color: var(--color-text-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   /* slight hover effect */
   transition: opacity var(--t-ui);
 }
@@ -235,7 +235,7 @@
      (.monster-page__panel is the same token). */
   background: var(--color-surface-light);
   color: var(--color-text-primary);
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   transition:
     background-color var(--t-ui),
     color var(--t-ui);
@@ -270,7 +270,7 @@
   border: 0;
   background: none;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   overflow: hidden; /* clip the image's corners to the radius */
   break-inside: avoid;
   transition: opacity var(--t-ui);

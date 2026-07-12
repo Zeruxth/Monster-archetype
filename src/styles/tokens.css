@@ -27,6 +27,27 @@
   /* Transitions */
   --t-screen: 350ms ease-in-out;
   --t-ui: 300ms ease;
+
+  /* ---- Custom cursor: the hand-drawn arrow, inverting per-pixel ----
+     The visible arrow is NOT a CSS cursor image — it's the CursorFx overlay
+     (src/components/CursorFx.tsx), a fixed SVG riding the pointer with
+     `mix-blend-mode: difference`, so it adapts to whatever COLOR it crosses
+     (dark #1A1A1A over light panels, light #E4E4E4 over the dark site — see
+     the palette math in CursorFx.css).
+
+     These two vars are a transparent 1×1 PNG that HIDES the native cursor
+     underneath the overlay (PNG because Safari won't render SVG cursors).
+     They stay as a PAIR because the trailing keyword at each usage site is
+     the overlay's signal — CursorFx reads the target's computed `cursor`:
+       url(…) + `pointer`        → outline arrow (hover form)
+       url(…) + `auto`/`default` → filled arrow (rest form)
+       no url() (text fields' `text`, disabled chips' `not-allowed`) →
+         overlay hides and the REAL native cursor shows.
+     So: `cursor: var(--cursor-hover), pointer` on clickables,
+     `var(--cursor-default), auto` everywhere else, and plain keywords where
+     the native cursor should stay. */
+  --cursor-default: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=") 0 0;
+  --cursor-hover: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=") 0 0;
 }
 
 /*

@@ -1,0 +1,42 @@
+/* ---- Difference-blend cursor overlay (see CursorFx.tsx) ----
+   Drawn in #FEFEFE under `mix-blend-mode: difference`, so each pixel becomes
+   |FE − backdrop| channel-wise — the arrow inverts against whatever COLOR it
+   crosses, not per component:
+     over light panels  #E4E4E4 → #1A1A1A (exactly --color-text-primary)
+     over dark chips    #1A1A1A → #E4E4E4 (exactly --color-surface-light)
+     over the dark page #242424 → #DADADA
+   (#FEFEFE, not #FFFFFF, makes those first two land EXACTLY on the palette.) */
+.cursor-fx {
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* Same raster size the CSS-cursor version used (design's 25×37 kept at the
+     32px cursor scale); the two paths carry that drawing's viewBox. */
+  width: 23px;
+  height: 32px;
+  z-index: 9999; /* above everything, incl. the lightbox scrim (200) */
+  pointer-events: none; /* never intercepts hit-testing */
+  mix-blend-mode: difference;
+  /* Moved by CursorFx.tsx with translate3d and NO transition — any easing here
+     would read as cursor lag. */
+  opacity: 0; /* hidden until the first real mouse move */
+  overflow: visible; /* the 1.5-unit viewBox padding keeps strokes unclipped */
+}
+
+.cursor-fx__fill {
+  fill: #fefefe;
+}
+.cursor-fx__line {
+  fill: none;
+  stroke: #fefefe;
+  stroke-width: 1.25; /* local units = 1px on screen at the 23×32 scale */
+  stroke-linejoin: round;
+}
+
+/* Touch devices: no mouse pointer to mirror (and tokens' transparent PNG only
+   ever suppresses a cursor that a mouse would show). */
+@media (pointer: coarse) {
+  .cursor-fx {
+    display: none;
+  }
+}

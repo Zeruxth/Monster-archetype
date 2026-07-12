@@ -17,6 +17,10 @@ body,
 html {
   scrollbar-width: thin;
   scrollbar-color: #9a9a9a transparent;
+  /* Hides the native cursor sitewide — the VISIBLE arrow is the CursorFx
+     difference-blend overlay (see tokens.css for the url()/keyword contract
+     this declaration starts). */
+  cursor: var(--cursor-default), auto;
 }
 ::-webkit-scrollbar {
   width: 6px;
@@ -53,6 +57,22 @@ body {
 
 button {
   font-family: inherit;
+}
+
+/* Clickables: the trailing `pointer` keyword is what flips the CursorFx
+   overlay to its outline form. Component CSS repeats `var(--cursor-hover),
+   pointer` wherever a class rule used to say `cursor: pointer` (class rules
+   would out-rank this base one). */
+a,
+button {
+  cursor: var(--cursor-hover), pointer;
+}
+
+/* Text fields keep the REAL native I-beam: a url()-less computed cursor makes
+   the CursorFx overlay hide itself (disabled chips' `not-allowed` likewise). */
+textarea,
+input {
+  cursor: text;
 }
 
 p {

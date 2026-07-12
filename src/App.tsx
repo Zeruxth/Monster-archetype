@@ -12,6 +12,7 @@ import { Definer } from './screens/Definer';
 import { MonsterPage } from './screens/MonsterPage';
 import { About } from './screens/About';
 import { BlotGallery } from './screens/BlotGallery';
+import CursorFx from './components/CursorFx';
 import { buildDeck, DECK_SIZE } from './data/cards';
 import type { TestCard } from './data/cards';
 import type { CardAnswer, Monster } from './data/monsters';
@@ -241,7 +242,14 @@ export default function App() {
 
   // Dev-only blot library review sheet (open at #blots). Guard sits AFTER all
   // hooks + handlers so React's hook order stays fixed across renders.
-  if (SHOW_BLOTS) return <BlotGallery />;
+  // CursorFx comes along — the native cursor is transparent here too.
+  if (SHOW_BLOTS)
+    return (
+      <>
+        <BlotGallery />
+        <CursorFx />
+      </>
+    );
 
   return (
     <div className="app">
@@ -346,6 +354,12 @@ export default function App() {
           <About onTest={goTest} onDefiner={goDefiner} onHome={goHome} />
         )}
       </main>
+      {/* The visible cursor — a fixed difference-blend overlay riding the
+          pointer (the native cursor sitewide is a transparent PNG; see
+          tokens.css). A SIBLING after <main>, not a child: <main> animates
+          opacity, which isolates blending inside it — out here the arrow
+          blends against the whole painted page. */}
+      <CursorFx />
     </div>
   );
 }

@@ -135,7 +135,7 @@
   border-radius: 5.305px;
   background: transparent;
   color: var(--color-text-primary);
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   transition:
     background var(--t-ui),
     color var(--t-ui),

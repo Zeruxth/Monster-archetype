@@ -7,7 +7,7 @@
   line-height: 1;
   color: var(--color-text-primary);
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   transition: background-color var(--t-ui), color var(--t-ui),
     border-color var(--t-ui), opacity var(--t-ui);
 }

@@ -163,7 +163,7 @@
   font: inherit;
   font-weight: 400;
   white-space: nowrap;
-  cursor: pointer;
+  cursor: var(--cursor-hover), pointer;
   transition: font-weight var(--t-ui), opacity var(--t-ui);
 }
 .landing__nav-item:hover {

@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "flubber": "^0.4.2",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "svg-path-properties": "^2.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
