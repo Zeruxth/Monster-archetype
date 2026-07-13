@@ -17,6 +17,7 @@ import { buildDeck, DECK_SIZE } from './data/cards';
 import type { TestCard } from './data/cards';
 import type { CardAnswer, Monster } from './data/monsters';
 import { EMOTIONS } from './data/emotions';
+import type { EmotionId } from './data/emotions';
 import { analyze } from './services/analysis';
 import './App.css';
 
@@ -35,10 +36,18 @@ type Step =
 // mounts (kept in sync with the frame-exit-down animation in Test.css).
 const REVEAL_EXIT_MS = 500;
 
-// A floor on the loading beat so a fast (or fast-failing) analysis doesn't flash
-// the dots and jump straight to the reveal. The two Claude calls usually take a
-// few seconds; this only bites when they resolve — or error out — quickly.
+// A floor on the loading beat so a fast (or fast-failing) emotion call doesn't
+// flash the dots and jump straight to the reveal.
 const MIN_LOADING_MS = 1400;
+
+// Typical time from starting the analysis to the monster result landing
+// (Haiku emotion call ~2s + Sonnet writing 5-6 Hebrew sentences ~5-6s). The
+// wait is split half/half between the two screens: the dots hold until about
+// half of this, then the reveal writes itself over the other half — its pace
+// derived from the time the dots actually took (see runAnalysis / typeMs) —
+// so the text's final period and the arrow land with the result instead of a
+// short load trailing into a long type-out.
+const EXPECTED_ANALYSIS_MS = 8000;
 
 // Dev-only: open the app at #blots to review the blot variation library. Read
 // once at load (a module constant) so App's hook order never changes at runtime.
@@ -56,10 +65,18 @@ export default function App() {
   // True when the shown monster is the Vritra error-fallback (both API attempts
   // failed) — the result screen swaps its "discover" link for a "נסה שוב" retry.
   const [isFallback, setIsFallback] = useState(false);
+  // Stage-1 result: the detected emotion driving the רגש reveal. Lands seconds
+  // before the monster + paragraph, which finish in the background while the
+  // reveal types itself out (see runAnalysis).
+  const [revealEmotion, setRevealEmotion] = useState<EmotionId | null>(null);
   const [exiting, setExiting] = useState(false);
   // The loading pill's box, captured at the loading→reveal hand-off so the reveal
   // card can morph (expand) out of it. null = no morph (e.g. dev jump).
   const [morphFrom, setMorphFrom] = useState<DOMRect | null>(null);
+  // How long the dots ended up showing, captured at the same hand-off — the
+  // reveal's typewriter paces itself to span roughly that time again (the
+  // other half of the split wait). undefined = dev jump, fixed pace.
+  const [typeMs, setTypeMs] = useState<number | undefined>(undefined);
   // Reveal → Result hand-off: the reveal (רגש) frame slides down and out before
   // the monster screen draws itself in. True while that exit is playing.
   const [revealExiting, setRevealExiting] = useState(false);
@@ -89,24 +106,70 @@ export default function App() {
     setStep('cards');
   };
 
-  // Run the two-call analysis (emotion → monster) under the loading dots, then
-  // hand off to the reveal. Shared by the last-card submit and the Vritra retry.
-  // `analyze` never rejects — it retries once internally, then resolves to the
-  // Vritra fallback — so the loading dots always give way to a real result.
-  const runAnalysis = (finalAnswers: CardAnswer[]) => {
+  // Run the staged analysis. Shared by the last-card submit and the Vritra
+  // retry. Stage 1 (emotion, ~1s) opens the reveal; stage 2 (monster + the
+  // written paragraph, the slow leg) lands in the background while the reveal
+  // types itself out, and arms its arrow (RevealBody's `ready`). Neither
+  // promise ever rejects — dead ends resolve to the Vritra fallback — so the
+  // dots always give way to a screen: the reveal normally, or (when detection
+  // itself failed and there is no emotion to announce) the Vritra result
+  // directly. A seeded retry re-announces the already-detected emotion.
+  const runAnalysis = (finalAnswers: CardAnswer[], knownEmotion?: EmotionId) => {
     setStep('loading');
+    setMonster(null); // the reveal's arrow stays down until stage 2 lands
+    setRevealEmotion(knownEmotion ?? null); // no stale emotion from a past run
     const startedAt = Date.now();
-    void analyze(finalAnswers).then((result) => {
-      // Hold the loading beat to its floor so a fast resolve doesn't flash the dots.
-      const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
-      window.setTimeout(() => {
+    const staged = analyze(finalAnswers, knownEmotion);
+    void staged.emotion.then((emotion) => {
+      if (emotion === null) {
+        // Detection itself failed — there is no emotion to announce, so the
+        // רגש reveal is skipped: the dots (held to their floor) give way
+        // straight to the Vritra result (staged.result has already resolved
+        // to the fallback here, and the setter below has stored it).
+        const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
+        window.setTimeout(() => {
+          void staged.result.then(() => setStep('result'));
+        }, wait);
+        return;
+      }
+      // Balanced hand-off: the dots hold until ~half the EXPECTED analysis
+      // time, then the reveal writes itself over the other half — its pace set
+      // by how long the dots actually showed (typeMs) — so the final period
+      // and the arrow land together with the monster result.
+      const openReveal = () => {
         // Measure the pill (still mounted) so the reveal card can expand from it.
         const pill = document.querySelector('.loading__pill');
         setMorphFrom(pill ? pill.getBoundingClientRect() : null);
-        setMonster(result.monster);
-        setIsFallback(result.isFallback);
+        setTypeMs(Date.now() - startedAt); // writing spans the time loading took
+        setRevealEmotion(emotion);
         setStep('reveal');
-      }, wait);
+      };
+      let opened = false;
+      const openOnce = () => {
+        if (!opened) {
+          opened = true;
+          openReveal();
+        }
+      };
+      const halfPoint = Math.max(MIN_LOADING_MS, EXPECTED_ANALYSIS_MS / 2);
+      const timer = window.setTimeout(
+        openOnce,
+        Math.max(0, halfPoint - (Date.now() - startedAt)),
+      );
+      // If the monster result beats the half-point, there is nothing left to
+      // pace against — end the dots at their floor; the reveal then types at
+      // its readable minimum with the arrow armed from the first character.
+      void staged.result.then(() => {
+        const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
+        window.setTimeout(() => {
+          window.clearTimeout(timer);
+          openOnce();
+        }, wait);
+      });
+    });
+    void staged.result.then((result) => {
+      setMonster(result.monster);
+      setIsFallback(result.isFallback);
     });
   };
 
@@ -122,8 +185,13 @@ export default function App() {
     }
   };
 
-  // Vritra fallback → "נסה שוב": re-run the whole pipeline with the same answers.
-  const retryAnalysis = () => runAnalysis(answers);
+  // Vritra fallback → "נסה שוב". If the emotion was already detected and
+  // announced (it was call 2 that failed), seed it: the retry re-runs only the
+  // monster call, and the replayed reveal repeats the SAME emotion — a fresh
+  // detection could come back different and contradict what the user read.
+  // If detection itself failed (revealEmotion null, no reveal was shown),
+  // re-run the whole pipeline.
+  const retryAnalysis = () => runAnalysis(answers, revealEmotion ?? undefined);
 
   // Reveal → Result: slide the רגש frame down and out (ease-out), then swap to
   // the monster screen, which draws its own lines / text / monster in.
@@ -295,9 +363,11 @@ export default function App() {
             ) : step === 'loading' ? (
               <LoadingBody />
             ) : step === 'reveal' ? (
-              monster && (
+              revealEmotion && (
                 <RevealBody
-                  emotion={EMOTIONS[monster.emotion]}
+                  emotion={EMOTIONS[revealEmotion]}
+                  ready={monster != null}
+                  typeMs={typeMs}
                   onReveal={revealToResult}
                   morphFrom={morphFrom}
                   exiting={revealExiting}

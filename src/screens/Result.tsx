@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { Monster } from '../data/monsters';
+import { POSTCARD_LINE } from '../services/analysis';
 import { Button } from '../components/Button';
+import { RetryIcon } from '../components/Retry';
 import { Menu } from '../components/Menu';
 import { Minotaur } from '../components/Minotaur';
 import { MonsterSolid, hasSolidArt } from '../components/MonsterSolid';
@@ -123,7 +125,11 @@ export function Result({
                   {monster.why}
                 </p>
                 {isFallback ? (
-                  <Button variant="link" arrow onClick={onRetry}>
+                  <Button
+                    variant="link"
+                    icon={<RetryIcon />}
+                    onClick={onRetry}
+                  >
                     נסה שוב
                   </Button>
                 ) : (
@@ -134,6 +140,16 @@ export function Result({
                 )}
               </div>
             </div>
+
+            {/* Fixed exhibition notice — its own small run pinned to the BOTTOM
+                of the text column (margin-top: auto in CSS), detached from the
+                model-written paragraph above. Absent on the Vritra fallback —
+                nothing was identified, so there is no postcard to take. */}
+            {!isFallback && (
+              <p className="result__postcard" dir="rtl">
+                {POSTCARD_LINE}
+              </p>
+            )}
           </div>
 
           <div className="result__art" ref={artRef}>

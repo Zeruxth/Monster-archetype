@@ -1,0 +1,33 @@
+/* The system retry glyph (Figma 585-1584): an open circular arrow in
+   currentColor. 20px wide — its 37/42.2 aspect then lands the same rendered
+   HEIGHT as the 19px system arrow, so the two glyphs read at one optical size
+   beside the same label type. */
+.retry {
+  display: block;
+  width: 20px;
+  height: auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.retry__shape {
+  fill: currentColor;
+}
+
+/* Hover: the Figma component has a single state (no corner morph like the
+   arrow), so the retry answers the host's hover in its own idiom — the circle
+   makes one full clockwise turn, the direction its arrowhead already points.
+   Same `.arrow-host` contract as the Arrow: fires with the whole control. */
+.retry {
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.arrow-host:hover:not(:disabled) .retry,
+.arrow-host:focus-visible:not(:disabled) .retry {
+  transform: rotate(360deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .retry {
+    transition: none;
+  }
+}

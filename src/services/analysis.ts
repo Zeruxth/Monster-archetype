@@ -149,39 +149,70 @@ function vritraFallback(): AnalysisResult {
   };
 }
 
-// Fixed exhibition notice appended after the personalized text. Deliberately
-// NOT part of the model prompt: appending in code guarantees the exact wording
-// every time, costs zero extra generation time, and keeps it off the Vritra
-// error screen (where nothing was identified and there is no postcard to take).
-const POSTCARD_LINE =
-  'המפלצת והרגש שזוהו עבורך בתהליך מופיעים גם בגלויה מודפסת, שאפשר לקחת בסיום הביקור.';
+// Fixed exhibition notice shown after the personalized text — Result.tsx
+// renders it as its own BOLD run continuing the paragraph. Deliberately NOT
+// part of the model prompt (and no longer baked into `why`): fixed wording in
+// code is guaranteed verbatim, costs zero generation time, can be styled
+// separately from the model text, and stays off the Vritra error screen
+// (nothing was identified — there is no postcard to take).
+export const POSTCARD_LINE =
+  'לצד התצוגה מחכה לכם גלויה מודפסת של המפלצת והרגש שעלו בתוצאה שלכם, וניתן לקחת אותה בסיום הביקור.';
 
-// One full pass: Call 1 (emotion) then Call 2 (monster + explanation).
-async function runOnce(answers: string[]): Promise<AnalysisResult> {
-  const emotion = await detectEmotion(answers);
-  const { monster, explanation } = await matchMonsterCall(emotion, answers);
-  return {
-    emotion,
-    monster: { ...monster, why: `${explanation} ${POSTCARD_LINE}` },
-    isFallback: false,
-  };
+// ---------------------------------------------------------------------------
+// Staged analysis: the emotion resolves first (the fast Haiku call), the full
+// result later (Sonnet writing the paragraph). App.tsx opens the רגש reveal on
+// the first promise and lets the second land in the background while the
+// reveal types itself out — the paragraph's generation time hides inside a
+// screen the user is already reading, instead of stretching the loading dots.
+// ---------------------------------------------------------------------------
+export interface StagedAnalysis {
+  /** Resolves the moment the emotion is known (call 1, retried once). NULL
+      means detection itself failed — the Vritra result is coming and App
+      skips the רגש reveal entirely rather than announce a feeling that was
+      never actually detected. Never rejects. */
+  emotion: Promise<EmotionId | null>;
+  /** Resolves when the monster + explanation are in (call 2, retried once
+      with the SAME emotion — the reveal is already showing it, so a full
+      re-run could contradict the screen). Any failure resolves to the Vritra
+      error-monster. Never rejects. */
+  result: Promise<AnalysisResult>;
 }
 
 /**
- * Run the full analysis for the four Rorschach answers. Retries the whole
- * pipeline once on any failure (network / bad JSON / unrecognized emotion /
- * unmatched monster), then falls back to the Vritra error-monster so the user
+ * Run the staged analysis for the four Rorschach answers. Each call gets one
+ * retry on any failure (network / bad JSON / unrecognized emotion / unmatched
+ * monster); a dead end resolves to the Vritra error-monster, so the user
  * always receives a result.
+ *
+ * `knownEmotion` seeds a Vritra RETRY where detection already succeeded and
+ * was announced on the reveal: call 1 is skipped — re-detecting could come
+ * back different and contradict the emotion the user has already read.
  */
-export async function analyze(answers: CardAnswer[]): Promise<AnalysisResult> {
+export function analyze(
+  answers: CardAnswer[],
+  knownEmotion?: EmotionId,
+): StagedAnalysis {
   const texts = answers.map((a) => a.text);
-  try {
-    return await runOnce(texts);
-  } catch {
-    try {
-      return await runOnce(texts);
-    } catch {
-      return vritraFallback();
-    }
-  }
+  // Call 1 with one retry (or the seeded emotion). This attempt may reject
+  // (both tries failed) — both derived promises below attach a catch, so no
+  // rejection goes unhandled.
+  const attempt = knownEmotion
+    ? Promise.resolve(knownEmotion)
+    : detectEmotion(texts).catch(() => detectEmotion(texts));
+
+  const result: Promise<AnalysisResult> = attempt
+    .then(async (emotion) => {
+      const { monster, explanation } = await matchMonsterCall(
+        emotion,
+        texts,
+      ).catch(() => matchMonsterCall(emotion, texts));
+      return {
+        emotion,
+        monster: { ...monster, why: explanation },
+        isFallback: false,
+      };
+    })
+    .catch(() => vritraFallback());
+
+  return { emotion: attempt.catch(() => null), result };
 }
