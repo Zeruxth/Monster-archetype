@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Landing } from './screens/Landing';
 import type { CatalogOrigin } from './screens/Landing';
@@ -12,6 +12,7 @@ import { Definer } from './screens/Definer';
 import { MonsterPage } from './screens/MonsterPage';
 import { About } from './screens/About';
 import { BlotGallery } from './screens/BlotGallery';
+import { Reel } from './screens/Reel';
 import CursorFx from './components/CursorFx';
 import { buildDeck, DECK_SIZE } from './data/cards';
 import type { TestCard } from './data/cards';
@@ -49,10 +50,20 @@ const MIN_LOADING_MS = 1400;
 // short load trailing into a long type-out.
 const EXPECTED_ANALYSIS_MS = 8000;
 
+// An unfinished test (instructions / cards / loading / reveal) left untouched
+// for this long resets to the home screen — exhibition kiosks must never greet
+// the next visitor with the previous visitor's half-done run.
+const TEST_IDLE_RESET_MS = 5 * 60_000;
+
 // Dev-only: open the app at #blots to review the blot variation library. Read
 // once at load (a module constant) so App's hook order never changes at runtime.
 const SHOW_BLOTS =
   typeof window !== 'undefined' && window.location.hash === '#blots';
+
+// Dev-only: open the app at #reel for the video-export capture stage — every
+// landing monster drawing in and un-drawing once, in order (see screens/Reel).
+const SHOW_REEL =
+  typeof window !== 'undefined' && window.location.hash.startsWith('#reel');
 
 export default function App() {
   const [step, setStep] = useState<Step>('landing');
@@ -291,6 +302,39 @@ export default function App() {
     step === 'cards' ||
     step === 'loading' ||
     step === 'reveal';
+
+  // Exhibition safeguard: an unfinished test left alone resets to the home
+  // screen, so the next visitor never finds a half-done run. The window
+  // restarts on ANY touch/key (not just step changes) — someone standing
+  // there thinking or typing is active, someone who walked away is not, and
+  // they get ≤5 idle minutes before the reset. Reaching the result screen
+  // (or leaving the test any other way) disarms it.
+  useEffect(() => {
+    if (!inTest) return;
+    let timer: number;
+    const arm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        setExiting(false);
+        setRevealExiting(false);
+        setMorphFrom(null);
+        setDefinerOrigin(null);
+        setCardIndex(0);
+        setAnswers([]);
+        setMonster(null);
+        setRevealEmotion(null);
+        setStep('landing');
+      }, TEST_IDLE_RESET_MS);
+    };
+    arm();
+    window.addEventListener('pointerdown', arm);
+    window.addEventListener('keydown', arm);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', arm);
+      window.removeEventListener('keydown', arm);
+    };
+  }, [inTest]);
   const mainKey = inTest ? 'test' : step;
   // The shell enters via its own white-frame scale animation, so it opts out of
   // the shared screen fade-in (which would double up on that entrance). The
@@ -307,6 +351,11 @@ export default function App() {
     inTest || step === 'result' || definerFlyIn || step === 'monster'
       ? 'app__screen'
       : 'app__screen fade-in';
+
+  // Dev-only video-export stage (open at #reel). Before the blots guard, same
+  // rule: AFTER all hooks so React's hook order stays fixed. No CursorFx — the
+  // capture must not paint a cursor into the video frames.
+  if (SHOW_REEL) return <Reel />;
 
   // Dev-only blot library review sheet (open at #blots). Guard sits AFTER all
   // hooks + handlers so React's hook order stays fixed across renders.
@@ -353,7 +402,7 @@ export default function App() {
             }
             total={DECK_SIZE}
             dotColors={deck.map((c) => c.dotFill)}
-            onTest={beginCards}
+            onTest={goTest}
             onDefiner={goDefiner}
             onAbout={goAbout}
             onHome={goHome}

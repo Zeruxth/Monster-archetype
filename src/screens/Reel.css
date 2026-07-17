@@ -1,0 +1,28 @@
+/* Dev-only capture stage (#reel) — see Reel.tsx. The frame is the app's dark
+   page with the creature alone, centred; sized for a 2560×1280 (2:1) capture
+   viewport but expressed in viewport units so it previews fine anywhere. */
+.reel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-dark);
+}
+
+/* HoverGraphic's host div; the injected <svg> has no width/height of its own
+   (monsterArtSvg strips them), so the height set here rules and width follows
+   each creature's viewBox aspect. 76vh reads like the landing's proportions;
+   the max-width keeps the widest landscape creatures (Jörmungandr, ~2.3:1)
+   inside the frame with margins at 2:1 viewports. */
+.reel__stage {
+  height: 76vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reel__stage svg {
+  height: 100%;
+  width: auto;
+  max-width: 86vw;
+}

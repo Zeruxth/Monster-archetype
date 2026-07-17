@@ -18,8 +18,9 @@ interface MonsterArtProps {
 /**
  * SVG transform that scales a drawing about the centre of its own viewBox, so a
  * `scale` shrink stays centred in its box instead of drifting toward the origin.
+ * (Shared with MonsterSolid, which offers the same opt-in shrink.)
  */
-function centreScale(viewBox: string, scale: number): string {
+export function centreScale(viewBox: string, scale: number): string {
   const [minX, minY, w, h] = viewBox.split(/\s+/).map(Number);
   const cx = minX + w / 2;
   const cy = minY + h / 2;

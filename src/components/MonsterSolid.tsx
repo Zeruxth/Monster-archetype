@@ -1,10 +1,20 @@
 import { MONSTER_SOLID } from '../data/monsterSolid';
+import { centreScale } from './MonsterArt';
 import './Minotaur.css';
 
 interface MonsterSolidProps {
   /** Monster id — keys into MONSTER_SOLID. Guard with hasSolidArt() first. */
   id: string;
   className?: string;
+  /**
+   * Optional uniform shrink, applied about the drawing's centre — the same
+   * opt-in MonsterArt offers. Only the מגדיר inner pages pass it (tall
+   * portrait drawings read outsized there); the Result screen never does, so
+   * the test's reveal keeps every monster at full frame. Leaves the viewBox
+   * (and the shared hero-morph box) untouched; non-scaling-stroke keeps the
+   * 1px line weight.
+   */
+  scale?: number;
 }
 
 /** True when a finished solid-fill silhouette exists for this monster id. */
@@ -26,7 +36,7 @@ export function hasSolidArt(id: string): boolean {
  * all single-subpath shapes, where the rule is a no-op). Garuda has no art in
  * this node and the caller falls back to <Minotaur/>.
  */
-export function MonsterSolid({ id, className }: MonsterSolidProps) {
+export function MonsterSolid({ id, className, scale }: MonsterSolidProps) {
   const art = MONSTER_SOLID[id];
   if (!art) return null;
 
@@ -38,7 +48,12 @@ export function MonsterSolid({ id, className }: MonsterSolidProps) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <g className="minotaur__group">
+      <g
+        className="minotaur__group"
+        transform={
+          scale && scale !== 1 ? centreScale(art.viewBox, scale) : undefined
+        }
+      >
         {art.body.map((d, i) => (
           <path
             key={`b${i}`}

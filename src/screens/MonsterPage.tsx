@@ -7,6 +7,8 @@ import { Minotaur } from '../components/Minotaur';
 import { MonsterArt, hasMonsterArt } from '../components/MonsterArt';
 import { MonsterSolid, hasSolidArt } from '../components/MonsterSolid';
 import { EMOTIONS } from '../data/emotions';
+import { MONSTER_ART } from '../data/monsterArt';
+import { MONSTER_SOLID } from '../data/monsterSolid';
 import { monsterImages } from '../data/monsterImages';
 import type { Monster } from '../data/monsters';
 import './MonsterPage.css';
@@ -27,6 +29,22 @@ interface MonsterPageProps {
 // מבחן frame scaling in, but originating from where the monster was clicked).
 const OPEN_MS = 600;
 const OPEN_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+// The hero box is 439:520 (~0.84, sized around the Minotaur). Drawings much
+// NARROWER than that letterbox to the box's full height, so the tall portrait
+// monsters (Onryō, Nkisi, Lilith…) tower over the page. On this page only,
+// those step down 15% — about their own centre, box and hero-morph geometry
+// untouched. 0.7 sits in the natural gap of the art's aspect spread (13 tall
+// drawings fall at 0.41–0.67, everything else at 0.75+), so nothing wobbles
+// between the two groups; the Result screen deliberately doesn't do this.
+const TALL_ART_ASPECT = 0.7;
+const TALL_ART_SCALE = 0.85;
+function pageArtScale(id: string): number | undefined {
+  const viewBox = (MONSTER_SOLID[id] ?? MONSTER_ART[id])?.viewBox;
+  if (!viewBox) return undefined;
+  const [, , w, h] = viewBox.split(/\s+/).map(Number);
+  return w / h < TALL_ART_ASPECT ? TALL_ART_SCALE : undefined;
+}
 
 /**
  * A single monster's page (Figma 382-1522, the Minotaur). A light scrolling
@@ -201,9 +219,17 @@ export function MonsterPage({
                 a fallback for any monster that has outline art but no silhouette;
                 the filled Minotaur is the last resort. */}
             {hasSolidArt(monster.id) ? (
-              <MonsterSolid id={monster.id} className="monster-page__monster monster-hero" />
+              <MonsterSolid
+                id={monster.id}
+                className="monster-page__monster monster-hero"
+                scale={pageArtScale(monster.id)}
+              />
             ) : hasMonsterArt(monster.id) ? (
-              <MonsterArt id={monster.id} className="monster-page__monster monster-hero" />
+              <MonsterArt
+                id={monster.id}
+                className="monster-page__monster monster-hero"
+                scale={pageArtScale(monster.id)}
+              />
             ) : (
               <Minotaur className="monster-page__monster monster-hero" />
             )}

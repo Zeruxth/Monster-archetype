@@ -19,6 +19,10 @@ backups
 # copies in src/monster-images/, so this large originals folder stays local.
 /Monster Art/
 
+# Rendered video exports (the #reel capture pipeline's output) — large
+# binaries, regenerable on demand, not part of the site.
+/exports/
+
 # Local Claude Code settings
 .claude
 
