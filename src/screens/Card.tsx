@@ -72,6 +72,17 @@ export function CardBody({ card, isLast, onSubmit }: CardBodyProps) {
               className="card-screen__input"
               value={text}
               onChange={(e) => setText(e.target.value)}
+              // Enter submits (same as the arrow); Shift+Enter still breaks a
+              // line for visitors who want one. Mobile keyboards fire the same
+              // Enter keydown, and enterkeyhint labels their key "send" so the
+              // affordance is visible there too.
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleContinue();
+                }
+              }}
+              enterKeyHint="send"
               rows={1}
               aria-label="מה אתם רואים?"
               autoFocus

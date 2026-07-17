@@ -89,10 +89,11 @@
 
 /* CTA (rise-in keyframe: Test.css). Hidden but space-reserving — the card box
    must not grow when it arrives — until Reveal.tsx flips --on: typewriter
-   finished AND the background monster result landed. The 200ms delay is a
-   small breath after the last character; `both` keeps the from-state during
-   that delay and full opacity after (the base rule would otherwise re-hide
-   the button when the animation ends). */
+   finished AND the background monster result landed. No delay: the writing
+   already paces itself to the result, so the rise starts WITH the final
+   character (a gap here read as something being stuck); `both` keeps full
+   opacity after the animation (the base rule would otherwise re-hide the
+   button when it ends). */
 .reveal__cta {
   opacity: 0;
   /* opacity:0 alone still takes clicks — and advancing before the result has
@@ -101,7 +102,7 @@
 }
 .reveal__cta--on {
   pointer-events: auto;
-  animation: rise-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  animation: rise-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Reveal → Result: the card fades out over a small downward nudge (ease-out).

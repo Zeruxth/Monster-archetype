@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Landing } from './screens/Landing';
 import type { CatalogOrigin } from './screens/Landing';
@@ -19,7 +19,7 @@ import type { TestCard } from './data/cards';
 import type { CardAnswer, Monster } from './data/monsters';
 import { EMOTIONS } from './data/emotions';
 import type { EmotionId } from './data/emotions';
-import { analyze } from './services/analysis';
+import { analyze, warmupAnalysis } from './services/analysis';
 import './App.css';
 
 type Step =
@@ -40,15 +40,6 @@ const REVEAL_EXIT_MS = 500;
 // A floor on the loading beat so a fast (or fast-failing) emotion call doesn't
 // flash the dots and jump straight to the reveal.
 const MIN_LOADING_MS = 1400;
-
-// Typical time from starting the analysis to the monster result landing
-// (Haiku emotion call ~2s + Sonnet writing 5-6 Hebrew sentences ~5-6s). The
-// wait is split half/half between the two screens: the dots hold until about
-// half of this, then the reveal writes itself over the other half — its pace
-// derived from the time the dots actually took (see runAnalysis / typeMs) —
-// so the text's final period and the arrow land with the result instead of a
-// short load trailing into a long type-out.
-const EXPECTED_ANALYSIS_MS = 8000;
 
 // An unfinished test (instructions / cards / loading / reveal) left untouched
 // for this long resets to the home screen — exhibition kiosks must never greet
@@ -84,10 +75,12 @@ export default function App() {
   // The loading pill's box, captured at the loading→reveal hand-off so the reveal
   // card can morph (expand) out of it. null = no morph (e.g. dev jump).
   const [morphFrom, setMorphFrom] = useState<DOMRect | null>(null);
-  // How long the dots ended up showing, captured at the same hand-off — the
-  // reveal's typewriter paces itself to span roughly that time again (the
-  // other half of the split wait). undefined = dev jump, fixed pace.
-  const [typeMs, setTypeMs] = useState<number | undefined>(undefined);
+  // The live analysis-progress probe of the CURRENT run (see StagedAnalysis
+  // .progress) — the reveal's typewriter throttles itself against it so the
+  // text can never outrun the actual generation. A ref (not state): it's set
+  // synchronously in runAnalysis before the reveal can mount, and reading it
+  // has no render of its own.
+  const resultProgress = useRef<() => number>(() => 1);
   // Reveal → Result hand-off: the reveal (רגש) frame slides down and out before
   // the monster screen draws itself in. True while that exit is playing.
   const [revealExiting, setRevealExiting] = useState(false);
@@ -131,6 +124,7 @@ export default function App() {
     setRevealEmotion(knownEmotion ?? null); // no stale emotion from a past run
     const startedAt = Date.now();
     const staged = analyze(finalAnswers, knownEmotion);
+    resultProgress.current = staged.progress;
     void staged.emotion.then((emotion) => {
       if (emotion === null) {
         // Detection itself failed — there is no emotion to announce, so the
@@ -143,40 +137,22 @@ export default function App() {
         }, wait);
         return;
       }
-      // Balanced hand-off: the dots hold until ~half the EXPECTED analysis
-      // time, then the reveal writes itself over the other half — its pace set
-      // by how long the dots actually showed (typeMs) — so the final period
-      // and the arrow land together with the monster result.
-      const openReveal = () => {
+      // Open the reveal as soon as the emotion is in hand (the merged call
+      // streams it out ~2s in), held only to the dots' floor. The old
+      // hold-to-half-the-expected-wait predates the merge: back then a whole
+      // second API call still had to hide inside the reveal, so the dots
+      // absorbed half the wait up front. Now the full result rides one stream
+      // that usually lands INSIDE the reveal's ~8s writing beat — extra dots
+      // time would be pure added wait (and when the stream does run long, the
+      // reveal's bridge-hold caret covers the tail, not the dots).
+      const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
+      window.setTimeout(() => {
         // Measure the pill (still mounted) so the reveal card can expand from it.
         const pill = document.querySelector('.loading__pill');
         setMorphFrom(pill ? pill.getBoundingClientRect() : null);
-        setTypeMs(Date.now() - startedAt); // writing spans the time loading took
         setRevealEmotion(emotion);
         setStep('reveal');
-      };
-      let opened = false;
-      const openOnce = () => {
-        if (!opened) {
-          opened = true;
-          openReveal();
-        }
-      };
-      const halfPoint = Math.max(MIN_LOADING_MS, EXPECTED_ANALYSIS_MS / 2);
-      const timer = window.setTimeout(
-        openOnce,
-        Math.max(0, halfPoint - (Date.now() - startedAt)),
-      );
-      // If the monster result beats the half-point, there is nothing left to
-      // pace against — end the dots at their floor; the reveal then types at
-      // its readable minimum with the arrow armed from the first character.
-      void staged.result.then(() => {
-        const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
-        window.setTimeout(() => {
-          window.clearTimeout(timer);
-          openOnce();
-        }, wait);
-      });
+      }, wait);
     });
     void staged.result.then((result) => {
       setMonster(result.monster);
@@ -335,6 +311,15 @@ export default function App() {
       window.removeEventListener('keydown', arm);
     };
   }, [inTest]);
+
+  // Pre-warm the analysis Worker's connection while the visitor reads the
+  // instructions: the FIRST request after a quiet period pays ~4s of DNS+TLS
+  // setup, which would otherwise land inside the loading dots right after the
+  // 4th answer (see warmupAnalysis). Re-warming on every entry is harmless —
+  // on an already-warm connection the ping is a no-op.
+  useEffect(() => {
+    if (step === 'instructions') warmupAnalysis();
+  }, [step]);
   const mainKey = inTest ? 'test' : step;
   // The shell enters via its own white-frame scale animation, so it opts out of
   // the shared screen fade-in (which would double up on that entrance). The
@@ -416,7 +401,7 @@ export default function App() {
                 <RevealBody
                   emotion={EMOTIONS[revealEmotion]}
                   ready={monster != null}
-                  typeMs={typeMs}
+                  progress={resultProgress.current}
                   onReveal={revealToResult}
                   morphFrom={morphFrom}
                   exiting={revealExiting}

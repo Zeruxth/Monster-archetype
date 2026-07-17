@@ -56,11 +56,11 @@ const ALLOWED_ORIGINS = [
 // guarded them) means fewer tokens to wait for — and no visible Hebrew in
 // this step, which is what lets it run on Haiku.
 // ---------------------------------------------------------------------------
-const EMOTION_SYSTEM_PROMPT = `You are a psychological analysis system for the project "The Archetype of the Monster."
-
-You will receive four free-text responses from a user who viewed four Rorschach-style images and described what they saw. Identify which of seven emotions best matches the overall pattern of their four responses. Analyze all four together as a whole.
-
-THE SEVEN EMOTIONS AND THEIR LINGUISTIC MARKERS:
+// The emotion-detection core — the markers, the anti-confusion balance check
+// and the every-response-is-valid edge cases — shared VERBATIM by the
+// two-step flow's call 1 (EMOTION_SYSTEM_PROMPT) and the merged single-call
+// flow (ANALYZE_SYSTEM_PROMPT below), so the two paths can never drift.
+const EMOTION_DETECTION_GUIDE = `THE SEVEN EMOTIONS AND THEIR LINGUISTIC MARKERS:
 
 1. CONFUSION (בלבול)
 Markers: category mixing ("half human half animal", "a bug on a dancer"), inability to name what they see ("I don't know", "something strange"), things that shift or don't hold still, impossible combinations, describing something that belongs to two worlds at once.
@@ -93,7 +93,13 @@ EDGE CASES - EVERY RESPONSE IS VALID:
 - Sexual content: valid, often maps to longing
 - Repeated answers: repetition is fixation, analyze what they are stuck on
 - Irrelevant content: often indicates avoidance of emotional depth
-- NEVER refuse to give a result
+- NEVER refuse to give a result`;
+
+const EMOTION_SYSTEM_PROMPT = `You are a psychological analysis system for the project "The Archetype of the Monster."
+
+You will receive four free-text responses from a user who viewed four Rorschach-style images and described what they saw. Identify which of seven emotions best matches the overall pattern of their four responses. Analyze all four together as a whole.
+
+${EMOTION_DETECTION_GUIDE}
 
 Respond ONLY with valid JSON, no markdown, no backticks, no preamble.
 
@@ -113,11 +119,13 @@ RESPONSE FORMAT:
 //     (analysis.ts matches it against data/monsters.ts, aliases aside);
 //   HEBREW QUALITY — stops the spelling drift we saw in generated Hebrew.
 // ---------------------------------------------------------------------------
-const MONSTER_SYSTEM_PROMPT = `You are a monster-matching system for the project "The Archetype of the Monster."
-
-You will receive an identified emotion and the user's four Rorschach responses. Select the ONE monster whose SELECTION TRIGGER best matches the user's specific words, then write a personal explanation.
-
-CRITICAL: Each monster below has a SELECTION TRIGGER. This trigger describes what kind of user response should lead to that specific monster. Match the trigger, not the general emotion. Do NOT default to the most famous or generic monster in each category. If multiple monsters could fit, choose the one whose trigger matches the user's SPECIFIC words most precisely.
+// The monster-matching core — the trigger-over-fame rule, the full catalogue
+// with per-monster SELECTION TRIGGERs, the name-output contract (the
+// "monster" field is our DB key), the explanation instructions, edge cases
+// and Hebrew quality — shared VERBATIM by the two-step flow's call 2
+// (MONSTER_SYSTEM_PROMPT) and the merged single-call flow
+// (ANALYZE_SYSTEM_PROMPT below).
+const MONSTER_MATCHING_GUIDE = `CRITICAL: Each monster below has a SELECTION TRIGGER. This trigger describes what kind of user response should lead to that specific monster. Match the trigger, not the general emotion. Do NOT default to the most famous or generic monster in each category. If multiple monsters could fit, choose the one whose trigger matches the user's SPECIFIC words most precisely.
 
 ---
 
@@ -328,11 +336,47 @@ EDGE CASE EXPLANATIONS:
 - NEVER apologize. NEVER moralize. NEVER suggest the user needs help.
 
 HEBREW QUALITY:
-- The Hebrew fields (monster_he, culture, explanation, emotion) must be written in correct, standard modern Hebrew: accurate spelling (כתיב תקני), correct grammar, and correct gender/number agreement.
-- Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.
+- The Hebrew fields (monster_he, explanation) must be written in correct, standard modern Hebrew: accurate spelling (כתיב תקני), correct grammar, and correct gender/number agreement.
+- Do not output spelling mistakes (שגיאות כתיב), typos, invented words, or broken/garbled characters.`;
+
+const MONSTER_SYSTEM_PROMPT = `You are a monster-matching system for the project "The Archetype of the Monster."
+
+You will receive an identified emotion and the user's four Rorschach responses. Select the ONE monster whose SELECTION TRIGGER best matches the user's specific words, then write a personal explanation.
+
+${MONSTER_MATCHING_GUIDE}
 
 RESPONSE FORMAT (JSON only, no markdown, no backticks):
-{"monster": "English name", "monster_he": "שם בעברית", "culture": "תרבות בעברית", "explanation": "5-7 sentences in Hebrew", "emotion": "הרגש בעברית", "chapter": 1-7}`;
+{"monster": "English name", "monster_he": "שם בעברית", "explanation": "5-7 sentences in Hebrew"}`;
+// ^ The response formats are trimmed to the fields the app actually reads.
+//   The old culture/emotion/chapter fields were generated straight into the
+//   trash — and the model writes token by token, so every dropped field is
+//   user-facing seconds saved. The D1 results log null-safes their columns
+//   (logResult), so logging keeps working; those columns are simply null.
+
+// ---------------------------------------------------------------------------
+// Merged single call — emotion + monster + explanation in ONE streamed
+// response (step "analyze"). Rationale: measured latency shows a large,
+// variable pre-generation wait (queueing) on EVERY Anthropic request; two
+// sequential calls pay it twice. The merged call pays it once, and because
+// the response STREAMS with "emotion" as the first JSON field, the app still
+// gets the emotion early (for the רגש reveal) while the explanation is still
+// being written — the same staged experience, one queue toll. The two-step
+// path above remains for seeded Vritra retries (the emotion is already on
+// screen and must not be re-decided) and for older deployed clients.
+// ---------------------------------------------------------------------------
+const ANALYZE_SYSTEM_PROMPT = `You are the analysis system for the project "The Archetype of the Monster."
+
+You will receive four free-text responses from a user who viewed four Rorschach-style images and described what they saw. In ONE response, in this order:
+1. Identify which of seven emotions best matches the overall pattern of the four responses, analyzed together as a whole.
+2. Select the ONE monster from the identified emotion's section of the catalogue whose SELECTION TRIGGER best matches the user's specific words.
+3. Write the personal explanation.
+
+${EMOTION_DETECTION_GUIDE}
+
+${MONSTER_MATCHING_GUIDE}
+
+RESPONSE FORMAT (raw JSON only — no markdown, NO code fences, no preamble; start your response with "{"). The "emotion" field MUST come first — it is read from the stream while the rest of the response is still being written:
+{"emotion": "confusion/suspicion/terror/awe/longing/smallness/security", "monster": "English name", "monster_he": "שם בעברית", "explanation": "5-7 sentences in Hebrew"}`;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -360,14 +404,16 @@ function json(body, status, origin) {
 
 function buildUserContent(step, answers, emotion) {
   const [a, b, c, d] = answers;
-  if (step === 'emotion') {
+  if (step === 'emotion' || step === 'analyze') {
     return (
       'The user viewed four Rorschach images and wrote:\n\n' +
       `Image 1: "${a}"\n` +
       `Image 2: "${b}"\n` +
       `Image 3: "${c}"\n` +
       `Image 4: "${d}"\n\n` +
-      'Analyze these four responses together and identify the dominant emotion.'
+      (step === 'analyze'
+        ? 'Analyze these four responses together: identify the dominant emotion, select the best-fitting monster, and write the personal explanation.'
+        : 'Analyze these four responses together and identify the dominant emotion.')
     );
   }
   return (
@@ -434,8 +480,12 @@ export default {
     }
 
     const { step, answers, emotion } = payload || {};
-    if (step !== 'emotion' && step !== 'monster') {
-      return json({ error: 'step must be "emotion" or "monster"' }, 400, origin);
+    if (step !== 'emotion' && step !== 'monster' && step !== 'analyze') {
+      return json(
+        { error: 'step must be "emotion", "monster" or "analyze"' },
+        400,
+        origin,
+      );
     }
     if (!Array.isArray(answers) || answers.length !== 4) {
       return json({ error: 'answers must be an array of four strings' }, 400, origin);
@@ -444,7 +494,12 @@ export default {
       return json({ error: 'emotion is required for step "monster"' }, 400, origin);
     }
 
-    const system = step === 'emotion' ? EMOTION_SYSTEM_PROMPT : MONSTER_SYSTEM_PROMPT;
+    const system =
+      step === 'emotion'
+        ? EMOTION_SYSTEM_PROMPT
+        : step === 'analyze'
+          ? ANALYZE_SYSTEM_PROMPT
+          : MONSTER_SYSTEM_PROMPT;
     const userContent = buildUserContent(step, answers.map((a) => String(a ?? '')), emotion);
 
     let anthropicRes;
@@ -460,6 +515,9 @@ export default {
           model: step === 'emotion' ? EMOTION_MODEL : MONSTER_MODEL,
           max_tokens: MAX_TOKENS,
           temperature: TEMPERATURE,
+          // The merged call streams so the app can read the leading "emotion"
+          // field while the explanation is still being written.
+          stream: step === 'analyze',
           // The system prompt is identical for every visitor, so mark it as a
           // cache breakpoint: Anthropic reuses the processed prompt across
           // requests (5-minute sliding TTL) instead of re-reading the whole
@@ -478,6 +536,57 @@ export default {
     if (!anthropicRes.ok) {
       const detail = await anthropicRes.text().catch(() => '');
       return json({ error: 'anthropic error', status: anthropicRes.status, detail }, 502, origin);
+    }
+
+    // Merged call: hand Anthropic's SSE stream straight through to the client
+    // (which reads the leading "emotion" field mid-stream). A tee'd copy is
+    // accumulated AFTER the response is flowing (waitUntil) so the results
+    // log still gets its row — parsing/logging can never delay the stream.
+    if (step === 'analyze') {
+      if (!anthropicRes.body) {
+        return json({ error: 'upstream returned no stream' }, 502, origin);
+      }
+      // Forward the SSE through an EXPLICIT pump (upstream reader → writer)
+      // instead of handing the upstream body / a tee() branch to Response
+      // directly — the direct hand-off was delivered to fetch clients as one
+      // buffered burst at stream end (measured; curl streamed fine, browsers
+      // didn't), which defeated the whole point of the merged call: reading
+      // the leading "emotion" field seconds before the rest. The pump also
+      // collects the chunks for the results log — no tee needed.
+      const { readable, writable } = new TransformStream();
+      ctx.waitUntil(
+        (async () => {
+          const writer = writable.getWriter();
+          const reader = anthropicRes.body.getReader();
+          const chunks = [];
+          try {
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              await writer.write(value);
+            }
+            await writer.close();
+          } catch (err) {
+            await writer.abort(err).catch(() => {});
+          }
+          if (env.DB) {
+            const sse = new TextDecoder().decode(concatChunks(chunks));
+            await logAnalyzeSse(env, answers, sse);
+          }
+        })(),
+      );
+      return new Response(readable, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/event-stream',
+          // no-transform + identity: keep Cloudflare's edge from compressing
+          // (compression also buffers).
+          'Cache-Control': 'no-store, no-transform',
+          'Content-Encoding': 'identity',
+          ...corsHeaders(origin),
+        },
+      });
     }
 
     let data;
@@ -507,8 +616,52 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
-// Results log (D1) — one row per completed analysis, written on the monster step.
+// Results log (D1) — one row per completed analysis, written on the monster
+// step (two-step flow) or from the tee'd stream copy (merged flow).
 // ---------------------------------------------------------------------------
+
+// Joins the pump's collected chunks for decoding (chunks split mid-character
+// are fine — decoding happens once over the joined bytes).
+function concatChunks(chunks) {
+  let len = 0;
+  for (const c of chunks) len += c.byteLength;
+  const out = new Uint8Array(len);
+  let off = 0;
+  for (const c of chunks) {
+    out.set(c, off);
+    off += c.byteLength;
+  }
+  return out;
+}
+
+// Merged-flow logging: reassemble the model's text from the SSE's
+// content_block_delta events and log the parsed result. Runs in waitUntil
+// after the client's stream has fully flowed; best-effort like logResult
+// itself. The model-decided emotion rides in result.emotion (the merged
+// format's first field) — it's the English id, so it fills the same
+// `emotion` column the two-step flow logs; emotion_he stays null (dropped
+// from the output for speed long ago).
+async function logAnalyzeSse(env, answers, sse) {
+  try {
+    let text = '';
+    for (const line of sse.split('\n')) {
+      if (!line.startsWith('data:')) continue;
+      try {
+        const ev = JSON.parse(line.slice(5));
+        if (ev.type === 'content_block_delta' && ev.delta && typeof ev.delta.text === 'string') {
+          text += ev.delta.text;
+        }
+      } catch {
+        // keep-alives / non-JSON lines — skip
+      }
+    }
+    const result = extractJson(text);
+    await logResult(env, result.emotion, answers, { ...result, emotion: undefined });
+  } catch {
+    // Best-effort: a logging failure must never surface anywhere.
+  }
+}
+
 async function logResult(env, emotion, answers, result) {
   try {
     const a = (Array.isArray(answers) ? answers : []).map((x) => String(x ?? ''));

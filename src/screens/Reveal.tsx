@@ -14,11 +14,14 @@ interface RevealBodyProps {
    *  The CTA arrow only rises once BOTH the full text has typed and this is
    *  true — the next screen must never open onto a half-written result. */
   ready?: boolean;
-  /** How long the loading dots showed before this screen (ms). The App splits
-   *  the expected wait half dots / half writing, so the full text paces itself
-   *  to span roughly this same time again (clamped to a readable cadence).
-   *  Absent (dev jump): a fixed comfortable pace. */
-  typeMs?: number;
+  /** Live 0..1 probe of how far the monster result's generation has actually
+   *  come (the analysis stream's own progress; only 1 once it has settled).
+   *  The typewriter throttles itself against it, so the text can never
+   *  outrun the generation: its last character and the result land together
+   *  by construction, and any waiting is spread through the writing as small
+   *  hesitations rather than parked after a finished-looking paragraph.
+   *  Absent (dev jump): unthrottled. */
+  progress?: () => number;
   /** The loading pill's box, so this card can expand (morph) out of it. */
   morphFrom?: DOMRect | null;
   /** When true (heading to the result), the card slides down and out while the
@@ -31,17 +34,20 @@ type Seg = { text: string; color?: string };
 
 const MORPH_MS = 600; // pill → card box expansion
 const TEXT_START = MORPH_MS; // start writing once the box has finished growing
-// Character-cadence band for the typewriter. The actual step is
-// typeMs / total — the writing spans about the time the dots already spent —
-// but never speeds past the 30ms/char floor, which lands the typical text at
-// ~7.5s of writing (the beat this screen is meant to hold; 12-24ms all read
-// too fast): the tie to the loading time may only STRETCH the writing, never
-// rush it. Nor does it crawl past 40.
-const CHAR_STEP_MIN = 30;
-const CHAR_STEP_MAX = 40;
-// Without a typeMs (dev jump straight here) the text spans this — the same
-// ~7.5s / 30ms-per-char feel.
-const DEFAULT_TYPE_MS = 7500;
+// The typewriter's speed limits, in ms per character. TOP is the approved
+// reading pace — the fastest the text ever moves; FLOOR is the slow walk
+// near the stream's frontier — the ease-off bottoms out here, so the
+// approach always terminates (a pure exponential glide never lands; that bug
+// once left the button hanging seconds after the text looked done).
+const TOP_MS_PER_CHAR = 30;
+const FLOOR_MS_PER_CHAR = 75;
+// Chase stiffness: the fraction of the text→frontier gap closed per
+// MILLISECOND. The typing runs on animation frames with time-based advance,
+// so inter-character delays vary continuously between TOP and FLOOR (a fixed
+// interval quantized them to a coarse 30/60ms grid — a faint mechanical
+// jitter). Lower = softer glide trailing further behind the stream; the
+// steady-state trail is (stream rate / CHASE_PER_MS) characters.
+const CHASE_PER_MS = 0.0045;
 
 // The fixed bridge sentence closing the body. It only types once the monster
 // result has actually landed (`ready`) — it promises the next screen, so it
@@ -83,7 +89,7 @@ export function RevealBody({
   emotion,
   onReveal,
   ready = true,
-  typeMs,
+  progress,
   morphFrom,
   exiting = false,
 }: RevealBodyProps) {
@@ -177,19 +183,13 @@ export function RevealBody({
   const total = titleLen + bodyLen;
   // The hold checkpoint: everything up to (not including) the bridge sentence.
   const holdAt = total - BRIDGE.length;
-  // Pace the writing to span the handed-down time (≈ what the dots took), so
-  // the final period lands about when the monster result does; the band keeps
-  // it readable whatever that time was.
-  const charStep = Math.round(
-    Math.min(
-      CHAR_STEP_MAX,
-      Math.max(CHAR_STEP_MIN, (typeMs ?? DEFAULT_TYPE_MS) / total),
-    ),
-  );
 
   // One growing counter spans title then body, so the body only starts once the
   // title is fully written.
   const [count, setCount] = useState(0);
+  // The chase's fractional position (count = floor of it) — a ref, not state,
+  // so sub-character advances don't re-render.
+  const posRef = useRef(0);
 
   // Read by the ticking interval so a mid-write `ready` flip lifts the hold
   // WITHOUT recreating the interval (an effect restart would re-apply the
@@ -198,28 +198,50 @@ export function RevealBody({
   readyRef.current = ready;
 
   useEffect(() => {
-    let interval: number | undefined;
+    let raf = 0;
+    let lastT = 0;
+    const loop = (now: number) => {
+      const dt = lastT ? Math.min(now - lastT, 100) : 0; // clamp hiccups
+      lastT = now;
+      // The frontier the text may approach: while the monster is still
+      // generating, the title is free (it's the already-announced emotion)
+      // but the paragraph only reaches as far as the stream itself has
+      // come — with its LAST character in reserve, so the text can never
+      // look finished before the result is truly in hand. `ready` releases
+      // everything (reserve + bridge), and the arrow rises with the final
+      // character.
+      const target = readyRef.current
+        ? total
+        : Math.min(
+            holdAt - 1,
+            titleLen + Math.round((progress?.() ?? 1) * (holdAt - titleLen)),
+          );
+      const lead = target - posRef.current;
+      if (lead > 0 && dt > 0) {
+        // Glide toward the frontier, time-based: the rate eases off with the
+        // remaining gap, clamped between the reading pace (TOP) and the
+        // terminating walk (FLOOR). Far behind → full pace; nearing the
+        // frontier → a continuous slow-down; fresh chunks → it picks back
+        // up. Smooth, no staccato, and it lands.
+        const rate = Math.min(
+          1 / TOP_MS_PER_CHAR,
+          Math.max(1 / FLOOR_MS_PER_CHAR, lead * CHASE_PER_MS),
+        );
+        posRef.current = Math.min(target, posRef.current + rate * dt);
+        const next = Math.floor(posRef.current);
+        setCount((c) => (next > c ? next : c));
+        if (readyRef.current && next >= total) return; // done — stop the loop
+      }
+      raf = requestAnimationFrame(loop);
+    };
     const startId = window.setTimeout(() => {
-      interval = window.setInterval(() => {
-        setCount((c) => {
-          // While the monster is still generating, stop short of the bridge
-          // sentence. The tick keeps idling (React bails on the no-op state)
-          // and flows straight through the moment `ready` flips — or never
-          // pauses at all if the result landed before the paragraph finished.
-          const cap = readyRef.current ? total : holdAt;
-          if (c >= cap) {
-            if (c >= total) window.clearInterval(interval);
-            return c;
-          }
-          return c + 1;
-        });
-      }, charStep);
+      raf = requestAnimationFrame(loop);
     }, TEXT_START);
     return () => {
       window.clearTimeout(startId);
-      if (interval) window.clearInterval(interval);
+      cancelAnimationFrame(raf);
     };
-  }, [total, holdAt, charStep]);
+  }, [total, holdAt, titleLen, progress]);
 
   // The CTA rises once the typewriter is done AND the background result is in
   // (`ready`). It stays mounted throughout — reserving its space — so the card
