@@ -251,15 +251,6 @@ function vritraFallback(): AnalysisResult {
   };
 }
 
-// Fixed exhibition notice shown after the personalized text — Result.tsx
-// renders it as its own BOLD run continuing the paragraph. Deliberately NOT
-// part of the model prompt (and no longer baked into `why`): fixed wording in
-// code is guaranteed verbatim, costs zero generation time, can be styled
-// separately from the model text, and stays off the Vritra error screen
-// (nothing was identified — there is no postcard to take).
-export const POSTCARD_LINE =
-  'לצד התצוגה מחכה לכם גלויה מודפסת של המפלצת והרגש שעלו בתוצאה שלכם, וניתן לקחת אותה בסיום הביקור.';
-
 // ---------------------------------------------------------------------------
 // Staged analysis over ONE streamed call: the model writes the emotion as its
 // first JSON field, so the emotion promise resolves seconds into the stream

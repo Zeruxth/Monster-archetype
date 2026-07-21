@@ -41,10 +41,15 @@ const REVEAL_EXIT_MS = 500;
 // flash the dots and jump straight to the reveal.
 const MIN_LOADING_MS = 1400;
 
-// An unfinished test (instructions / cards / loading / reveal) left untouched
-// for this long resets to the home screen — exhibition kiosks must never greet
-// the next visitor with the previous visitor's half-done run.
-const TEST_IDLE_RESET_MS = 5 * 60_000;
+// Any screen past the landing, left with no visitor activity (mouse move,
+// click, key, scroll, touch) for this long, returns to the home screen — an
+// exhibition kiosk must never sit on the previous visitor's screen.
+const IDLE_RESET_MS = 2 * 60_000;
+// How often the idle watchdog checks the last-activity stamp. Coarse on
+// purpose (the reset just needs to land within a few seconds of the 2-min
+// mark) so high-frequency pointermove events only stamp a timestamp rather
+// than churn a timer.
+const IDLE_CHECK_MS = 5_000;
 
 // Dev-only: open the app at #blots to review the blot variation library. Read
 // once at load (a module constant) so App's hook order never changes at runtime.
@@ -279,38 +284,43 @@ export default function App() {
     step === 'loading' ||
     step === 'reveal';
 
-  // Exhibition safeguard: an unfinished test left alone resets to the home
-  // screen, so the next visitor never finds a half-done run. The window
-  // restarts on ANY touch/key (not just step changes) — someone standing
-  // there thinking or typing is active, someone who walked away is not, and
-  // they get ≤5 idle minutes before the reset. Reaching the result screen
-  // (or leaving the test any other way) disarms it.
+  // Exhibition safeguard: on ANY screen past the landing, if the visitor goes
+  // idle — no mouse movement, click, key, scroll or touch — for IDLE_RESET_MS,
+  // return to the home screen, so the kiosk never sits on a previous visitor's
+  // test / result / monster page. The landing itself is exempt (already home).
+  // A last-activity timestamp + a coarse interval, rather than a timer reset
+  // per event, so pointermove's flood is cheap. Any navigation re-runs this
+  // (step dep), which restamps — moving between screens counts as activity.
   useEffect(() => {
-    if (!inTest) return;
-    let timer: number;
-    const arm = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        setExiting(false);
-        setRevealExiting(false);
-        setMorphFrom(null);
-        setDefinerOrigin(null);
-        setCardIndex(0);
-        setAnswers([]);
-        setMonster(null);
-        setRevealEmotion(null);
-        setStep('landing');
-      }, TEST_IDLE_RESET_MS);
+    if (step === 'landing') return;
+    let lastActivity = Date.now();
+    const bump = () => {
+      lastActivity = Date.now();
     };
-    arm();
-    window.addEventListener('pointerdown', arm);
-    window.addEventListener('keydown', arm);
+    const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'];
+    events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    const watchdog = window.setInterval(() => {
+      if (Date.now() - lastActivity < IDLE_RESET_MS) return;
+      // Clear every transient so the landing comes up fresh, from whatever
+      // screen we were on (test, result, catalogue or a monster page).
+      setExiting(false);
+      setRevealExiting(false);
+      setMorphFrom(null);
+      setDefinerOrigin(null);
+      setMonsterOrigin(null);
+      setPageMonster(null);
+      setCardIndex(0);
+      setAnswers([]);
+      setMonster(null);
+      setIsFallback(false);
+      setRevealEmotion(null);
+      setStep('landing');
+    }, IDLE_CHECK_MS);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('pointerdown', arm);
-      window.removeEventListener('keydown', arm);
+      window.clearInterval(watchdog);
+      events.forEach((e) => window.removeEventListener(e, bump));
     };
-  }, [inTest]);
+  }, [step]);
 
   // Pre-warm the analysis Worker's connection while the visitor reads the
   // instructions: the FIRST request after a quiet period pays ~4s of DNS+TLS
