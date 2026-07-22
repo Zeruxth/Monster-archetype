@@ -199,6 +199,49 @@
   word-break: break-word;
 }
 
+/* ---- Closing colophon (Figma 577-727) ----
+   A centered credits block, not the bottom-pinned art-over-text of the story
+   stages — so this layer overrides the shared flex-end to a middle anchor. */
+.about__layer--credits {
+  justify-content: center;
+  align-items: center;
+}
+.about__credits {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  /* The design's 407px block; shrinks with narrow frames. */
+  width: min(407px, 100%);
+}
+.about__credits-title {
+  margin: 0;
+  width: 100%;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.2;
+  /* Per the design the heading is right-aligned (it near-fills the block, so
+     it reads centred over the shorter lines below). */
+  text-align: right;
+}
+.about__credits-line {
+  margin: 0;
+  font-family: 'The Basics', 'Assistant', sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+/* The University of Haifa logo is a fixed brand asset (white + blue mark) —
+   an <img>, not the story's currentColor line-art. Its width/height attrs
+   hold the 138:84 aspect, so no reflow while it loads. */
+.about__credits-logo {
+  width: 138px;
+  height: auto;
+}
+
 /* ---- Morph overlay: the in-between shape during stage transitions ----
    Full sticky-frame svg with NO viewBox — its user units are CSS pixels, so
    the flubber paths (sampled in screen space) land exactly on the settled
@@ -327,5 +370,19 @@
   }
   .about__body {
     font-size: 18px;
+  }
+
+  /* Colophon follows the same phone step-down. */
+  .about__credits {
+    gap: 16px;
+  }
+  .about__credits-title {
+    font-size: 18px;
+  }
+  .about__credits-line {
+    font-size: 14px;
+  }
+  .about__credits-logo {
+    width: 110px;
   }
 }

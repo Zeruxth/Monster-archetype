@@ -17,6 +17,7 @@ import {
   star,
   type AboutArt,
 } from '../data/aboutShapes';
+import haifaLogo from '../assets/haifa-logo.svg';
 import './About.css';
 
 interface AboutProps {
@@ -36,8 +37,10 @@ interface AboutProps {
 
 interface Stage {
   key: string;
-  label: string;
-  body: string;
+  /** Standard stages carry a label + body; the credits colophon (last stage)
+   *  carries neither — it renders its own centered block (see the map). */
+  label?: string;
+  body?: string;
 }
 
 const STAGES: Stage[] = [
@@ -76,7 +79,18 @@ const STAGES: Stage[] = [
     label: 'תודות ומחשבות נוספות',
     body: 'הפרויקט הזה נבנה מתוך תהליך ארוך של קריאה, השוואה, ניסוי ושינוי כיוון. הוא אינו מבקש לקבוע משמעות אחת לכל מפלצת, אלא להציע דרך נוספת להתבונן בהן - דרך הרגשות שהן מעוררות והאופן שבו הן ממשיכות להשתנות לצדנו. תודה לכל מי שליווה את התהליך, קרא, שאל, העיר, ערער ועזר לדייק את המחשבה ואת הצורה.\n\nלמחשבות, שאלות או פניות נוספות: @aki.wip באינסטגרם',
   },
+  // The closing colophon (Figma 577-727) — a centered credits block, not the
+  // shape-canvas + label/body of the story stages; rendered specially below.
+  { key: 'credits' },
 ];
+
+/* ---- Closing colophon (Figma 577-727) ---- */
+const CREDITS = {
+  title: 'החוג לעיצוב תקשורת חזותית',
+  school: 'בית הספר לעיצוב',
+  university: 'אוניברסיטת חיפה',
+  year: 'תשפ"ו 2026',
+};
 
 /* ---- Stage art (design-local coordinates from the Figma metadata) ----
    Every canvas spans the 1344px content width; its height is that section's
@@ -323,6 +337,8 @@ const ART: ReactNode[] = [
   ),
   // 7 — thanks: text only
   null,
+  // 8 — credits: its own centered block (rendered in the map), no shape/morph
+  null,
 ];
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -535,10 +551,11 @@ export function About({ onTest, onDefiner, onHome }: AboutProps) {
       <div className="about__sticky" ref={stickyRef}>
         {STAGES.map((stage, i) => {
           const opacity = layerOpacity(i);
+          const isCredits = stage.key === 'credits';
           return (
             <section
               key={stage.key}
-              className="about__layer"
+              className={`about__layer${isCredits ? ' about__layer--credits' : ''}`}
               style={{
                 opacity,
                 visibility: opacity === 0 ? 'hidden' : undefined,
@@ -546,11 +563,29 @@ export function About({ onTest, onDefiner, onHome }: AboutProps) {
               }}
               aria-hidden={i !== active}
             >
-              {ART[i]}
-              <div className="about__text" dir="rtl">
-                <p className="about__label">{stage.label}</p>
-                <p className="about__body">{stage.body}</p>
-              </div>
+              {isCredits ? (
+                <div className="about__credits" dir="rtl">
+                  <p className="about__credits-title">{CREDITS.title}</p>
+                  <p className="about__credits-line">{CREDITS.school}</p>
+                  <p className="about__credits-line">{CREDITS.university}</p>
+                  <img
+                    className="about__credits-logo"
+                    src={haifaLogo}
+                    alt={CREDITS.university}
+                    width={138}
+                    height={84}
+                  />
+                  <p className="about__credits-line">{CREDITS.year}</p>
+                </div>
+              ) : (
+                <>
+                  {ART[i]}
+                  <div className="about__text" dir="rtl">
+                    <p className="about__label">{stage.label}</p>
+                    <p className="about__body">{stage.body}</p>
+                  </div>
+                </>
+              )}
             </section>
           );
         })}
